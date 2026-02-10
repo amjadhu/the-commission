@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Commission — Seahawks Fan Hub</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-left">
+      <h1 class="app-title">The Commission</h1>
+    </div>
+    <div class="header-right">
+      <button id="user-btn" class="user-badge" title="Switch user">
+        <span id="user-name">Pick Name</span>
+      </button>
+    </div>
+  </header>
+
+  <nav class="tab-bar">
+    <button class="tab active" data-view="feed">Feed</button>
+    <button class="tab" data-view="takes">Hot Takes</button>
+  </nav>
+
+  <main class="app-main">
+    <section id="view-feed" class="view active">
+      <div id="feed-list" class="card-list">
+        <!-- News cards rendered here -->
+      </div>
+    </section>
+
+    <section id="view-takes" class="view">
+      <form id="take-form" class="take-form">
+        <textarea id="take-input" placeholder="Drop your hot take..." maxlength="280" rows="2"></textarea>
+        <div class="take-form-footer">
+          <span id="char-count">280</span>
+          <button type="submit" class="btn btn-primary">Post Take</button>
+        </div>
+      </form>
+      <div id="takes-list" class="card-list">
+        <!-- Take cards rendered here -->
+      </div>
+    </section>
+  </main>
+
+  <!-- User selection modal -->
+  <div id="user-modal" class="modal">
+    <div class="modal-content">
+      <h2>Who are you?</h2>
+      <div id="user-list" class="user-list">
+        <!-- User buttons rendered here -->
+      </div>
+    </div>
+  </div>
+
+  <script src="js/firebase.js"></script>
+  <script src="js/users.js"></script>
+  <script src="js/feed.js"></script>
+  <script src="js/takes.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
