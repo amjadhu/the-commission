@@ -440,6 +440,237 @@ body {
   to { transform: rotate(360deg); }
 }
 
+/* === Feed Filters === */
+.feed-filters {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.feed-filter-btn {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.feed-filter-btn:hover {
+  border-color: var(--green);
+}
+
+.feed-filter-btn.active {
+  background: var(--green);
+  color: var(--navy);
+  border-color: var(--green);
+}
+
+/* === Rankings === */
+.rankings-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.rankings-tab {
+  flex: 1;
+  background: var(--card-bg);
+  border: 2px solid var(--card-border);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.rankings-tab.active {
+  background: var(--navy);
+  color: var(--text-on-dark);
+  border-color: var(--navy);
+}
+
+.rankings-panel {
+  display: none;
+}
+
+.rankings-panel.active {
+  display: block;
+}
+
+.rankings-hint {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.rankings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 16px;
+}
+
+.rank-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: grab;
+  transition: all 0.15s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.rank-item:active {
+  cursor: grabbing;
+}
+
+.rank-item.dragging {
+  opacity: 0.4;
+  border-color: var(--green);
+}
+
+.rank-seahawks {
+  background: #f0fce8;
+  border-color: var(--green);
+}
+
+.rank-number {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  min-width: 24px;
+  text-align: center;
+}
+
+.rank-team-abbr {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--navy);
+  min-width: 32px;
+}
+
+.rank-team-name {
+  font-size: 0.9rem;
+  flex: 1;
+}
+
+.rank-division {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.rank-drag-handle {
+  color: var(--grey);
+  font-size: 0.9rem;
+}
+
+.rankings-save-btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+}
+
+/* === Consensus View === */
+.consensus-list {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.consensus-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--navy);
+  color: var(--text-on-dark);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.consensus-row {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--card-border);
+  font-size: 0.8rem;
+}
+
+.consensus-row:last-child {
+  border-bottom: none;
+}
+
+.consensus-row.high-disagreement {
+  background: #fef9e8;
+}
+
+.consensus-row.rank-seahawks {
+  background: #f0fce8;
+}
+
+.ch-rank {
+  min-width: 28px;
+  font-weight: 700;
+}
+
+.ch-team {
+  flex: 1;
+  font-weight: 500;
+}
+
+.ch-user {
+  min-width: 36px;
+  text-align: center;
+  font-size: 0.8rem;
+}
+
+.ch-avg {
+  min-width: 36px;
+  text-align: center;
+  font-weight: 700;
+  color: var(--green);
+}
+
+.disagreements-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 16px;
+}
+
+.disagreements-card h3 {
+  font-size: 0.95rem;
+  color: var(--navy);
+  margin-bottom: 10px;
+}
+
+.disagreements-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.disagreement-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
 /* === Responsive === */
 @media (max-width: 480px) {
   .app-header {

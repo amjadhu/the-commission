@@ -2,7 +2,12 @@ const Feed = (() => {
   // List of RSS feeds to aggregate. Add/remove sources here.
   const RSS_URLS = [
     'https://www.seahawks.com/news/rss.xml',
-    'https://www.espn.com/espn/rss/nfl/news'
+    'https://www.espn.com/espn/rss/nfl/news',
+    'https://www.reddit.com/r/Seahawks/.rss',
+    'https://www.reddit.com/r/nfl/.rss',
+    'https://profootballtalk.nbcsports.com/feed/',
+    'https://www.cbssports.com/rss/headlines/nfl/',
+    'https://www.nfl.com/rss/rsslanding?searchString=home'
   ];
 
   // Public RSS -> JSON proxy used to fetch feeds in-browser.
@@ -10,18 +15,33 @@ const Feed = (() => {
   // Short list of emojis shown as reaction buttons on each news card.
   const EMOJIS = ['🔥', '💀', '🤡', '🏈'];
 
+  let allArticles = [];
+  let activeFilter = 'all';
+
   // Entry point: populate the feed list and handle errors.
   async function init() {
     const feedList = document.getElementById('feed-list');
     feedList.innerHTML = '<div class="loading">Loading news...</div>';
 
     try {
-      const articles = await fetchAllFeeds();
-      renderFeed(articles);
+      allArticles = await fetchAllFeeds();
+      renderFeed(allArticles);
     } catch (e) {
       console.error('Feed error:', e);
       feedList.innerHTML = '<div class="empty-state">Could not load news. Try refreshing.</div>';
     }
+  }
+
+  function filterBySource(source) {
+    activeFilter = source;
+    const filtered = source === 'all'
+      ? allArticles
+      : allArticles.filter(a => a.source === source);
+    renderFeed(filtered);
+
+    document.querySelectorAll('.feed-filter-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.source === source);
+    });
   }
 
   // Fetch all configured RSS feeds in parallel, normalize items and dedupe.
@@ -59,7 +79,7 @@ const Feed = (() => {
         seen.add(key);
         return true;
       })
-      .slice(0, 20);
+      .slice(0, 30);
   }
 
   // Render an array of article objects into the feed list container.
@@ -71,7 +91,20 @@ const Feed = (() => {
       return;
     }
 
+    // Build source filter bar from available sources
+    const sources = [...new Set(allArticles.map(a => a.source))];
+    const filterBar = document.createElement('div');
+    filterBar.className = 'feed-filters';
+    filterBar.innerHTML = `
+      <button class="feed-filter-btn ${activeFilter === 'all' ? 'active' : ''}" data-source="all">All</button>
+      ${sources.map(s => `<button class="feed-filter-btn ${activeFilter === s ? 'active' : ''}" data-source="${s}">${s}</button>`).join('')}
+    `;
+    filterBar.querySelectorAll('.feed-filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => filterBySource(btn.dataset.source));
+    });
+
     feedList.innerHTML = '';
+    feedList.appendChild(filterBar);
     articles.forEach(article => {
       feedList.appendChild(createNewsCard(article));
     });
@@ -159,7 +192,11 @@ const Feed = (() => {
       const host = new URL(url).hostname.replace('www.', '');
       if (host.includes('seahawks')) return 'Seahawks';
       if (host.includes('espn')) return 'ESPN';
-      if (host.includes('nfl')) return 'NFL';
+      if (host.includes('reddit') && url.includes('Seahawks')) return 'r/Seahawks';
+      if (host.includes('reddit')) return 'r/NFL';
+      if (host.includes('nbcsports') || host.includes('profootballtalk')) return 'PFT';
+      if (host.includes('cbssports')) return 'CBS Sports';
+      if (host.includes('nfl.com')) return 'NFL';
       return host.split('.')[0];
     } catch {
       return 'NFL';
@@ -186,5 +223,5 @@ const Feed = (() => {
     return 'n' + Math.abs(hash).toString(36);
   }
 
-  return { init };
+  return { init, filterBySource };
 })();

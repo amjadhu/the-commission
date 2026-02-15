@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
   Users.init();  // setup user selection + stored identity
   Feed.init();   // load and render RSS feed
   Takes.init();  // setup takes UI and form handling
+  Rankings.init();
   setupTabs();   // tab navigation behavior
 });
 
@@ -27,6 +28,8 @@ function setupTabs() {
       // When switching to the takes view we reload the list to show fresh data
       if (target === 'takes') {
         Takes.loadTakes();
+      } else if (target === 'rankings') {
+        Rankings.render();
       }
     });
   });
