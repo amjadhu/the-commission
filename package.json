@@ -1,0 +1,10 @@
+{
+  "name": "simple-web",
+  "private": true,
+  "scripts": {
+    "test": "node tests/browser.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.52.0"
+  }
+}
