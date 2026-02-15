@@ -1,5 +1,6 @@
-// Firebase configuration
-// TODO: Replace with your Firebase project config from console.firebase.google.com
+// Firebase configuration — replace these values with your Firebase project
+// settings from the Firebase console (console.firebase.google.com).
+// If left as placeholders the app will run in local-only (no shared DB) mode.
 const FirebaseConfig = {
   apiKey: 'YOUR_API_KEY',
   authDomain: 'YOUR_PROJECT.firebaseapp.com',
@@ -9,11 +10,14 @@ const FirebaseConfig = {
   appId: 'YOUR_APP_ID'
 };
 
-// Firebase state — initialized lazily when config is set up
+// Runtime Firebase state. `db` holds the Firestore instance once initialized.
+// `firebaseReady` is set true when init() succeeds so other modules can check.
 let db = null;
 let firebaseReady = false;
 
 const DB = (() => {
+  // Initialize Firebase app and Firestore. This is safe to call multiple
+  // times; it does a quick placeholder-check and sets `firebaseReady`.
   function init() {
     if (FirebaseConfig.apiKey === 'YOUR_API_KEY') {
       console.warn(
@@ -24,6 +28,7 @@ const DB = (() => {
     }
 
     try {
+      // Attach Firebase SDK and grab Firestore reference
       firebase.initializeApp(FirebaseConfig);
       db = firebase.firestore();
       firebaseReady = true;
@@ -32,11 +37,13 @@ const DB = (() => {
     }
   }
 
+  // Returns true when Firestore is available for reads/writes.
   function isReady() {
     return firebaseReady;
   }
 
-  // Reactions: one per user per news item per emoji
+  // Read all reaction documents for a given news item and group them by emoji.
+  // Returns an object like { '🔥': ['Alice','Bob'], '💀': ['Chris'] }
   async function getReactions(newsId) {
     if (!firebaseReady) return {};
     const snap = await db.collection('reactions')
@@ -51,6 +58,8 @@ const DB = (() => {
     return reactions;
   }
 
+  // Toggle a user's reaction on/off. If the same reaction exists it is deleted
+  // (returns false); otherwise a new reaction doc is added (returns true).
   async function toggleReaction(newsId, emoji, userId) {
     if (!firebaseReady) return null;
     const ref = db.collection('reactions');
@@ -61,15 +70,17 @@ const DB = (() => {
       .get();
 
     if (!existing.empty) {
+      // Remove existing reaction (toggle off)
       existing.forEach(doc => doc.ref.delete());
       return false; // removed
     } else {
+      // Add new reaction
       await ref.add({ newsId, emoji, userId, timestamp: Date.now() });
       return true; // added
     }
   }
 
-  // Hot takes
+  // Fetch recent 'takes' (hot opinions). Returns up to 50 takes ordered by time.
   async function getTakes() {
     if (!firebaseReady) return [];
     const snap = await db.collection('takes')
@@ -79,6 +90,7 @@ const DB = (() => {
     return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   }
 
+  // Add a new take into Firestore and return the created document id.
   async function addTake(text, authorId) {
     if (!firebaseReady) return null;
     const ref = await db.collection('takes').add({
@@ -89,7 +101,7 @@ const DB = (() => {
     return ref.id;
   }
 
-  // Votes on takes
+  // Votes are stored as individual documents. Read them and group by side.
   async function getVotes(takeId) {
     if (!firebaseReady) return { agree: [], disagree: [] };
     const snap = await db.collection('votes')
@@ -103,6 +115,9 @@ const DB = (() => {
     return votes;
   }
 
+  // Cast a vote for a take. The implementation removes any existing vote by
+  // the same user for the given take then (optionally) adds the new vote.
+  // If the user clicked the same side again we interpret that as a toggle-off.
   async function castVote(takeId, vote, userId) {
     if (!firebaseReady) return;
     const ref = db.collection('votes');
@@ -121,6 +136,7 @@ const DB = (() => {
     });
 
     if (!toggled) {
+      // Add the new vote since it wasn't a toggle-off
       batch.set(ref.doc(), { takeId, vote, userId, timestamp: Date.now() });
     }
     await batch.commit();

@@ -1,12 +1,16 @@
 const Feed = (() => {
+  // List of RSS feeds to aggregate. Add/remove sources here.
   const RSS_URLS = [
     'https://www.seahawks.com/news/rss.xml',
     'https://www.espn.com/espn/rss/nfl/news'
   ];
 
+  // Public RSS -> JSON proxy used to fetch feeds in-browser.
   const RSS2JSON_BASE = 'https://api.rss2json.com/v1/api.json?rss_url=';
+  // Short list of emojis shown as reaction buttons on each news card.
   const EMOJIS = ['🔥', '💀', '🤡', '🏈'];
 
+  // Entry point: populate the feed list and handle errors.
   async function init() {
     const feedList = document.getElementById('feed-list');
     feedList.innerHTML = '<div class="loading">Loading news...</div>';
@@ -20,6 +24,7 @@ const Feed = (() => {
     }
   }
 
+  // Fetch all configured RSS feeds in parallel, normalize items and dedupe.
   async function fetchAllFeeds() {
     const results = await Promise.allSettled(
       RSS_URLS.map(url =>
@@ -44,7 +49,7 @@ const Feed = (() => {
       .filter(r => r.status === 'fulfilled')
       .flatMap(r => r.value);
 
-    // Sort by date descending, dedupe by title
+    // Sort by date (newest first), dedupe by normalized title, and cap results.
     const seen = new Set();
     return articles
       .sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate))
@@ -57,6 +62,7 @@ const Feed = (() => {
       .slice(0, 20);
   }
 
+  // Render an array of article objects into the feed list container.
   function renderFeed(articles) {
     const feedList = document.getElementById('feed-list');
 
@@ -71,6 +77,7 @@ const Feed = (() => {
     });
   }
 
+  // Create a DOM node for a single news card, including reaction buttons.
   function createNewsCard(article) {
     const card = document.createElement('article');
     card.className = 'news-card';
@@ -101,10 +108,9 @@ const Feed = (() => {
       </div>
     `;
 
-    // Load reactions from Firebase
+    // Load persisted reactions from Firebase (if available) and hook buttons
     loadReactions(card, article.id);
 
-    // Wire up reaction buttons
     card.querySelectorAll('.reaction-btn').forEach(btn => {
       btn.addEventListener('click', () => handleReaction(card, article.id, btn.dataset.emoji));
     });
@@ -112,6 +118,7 @@ const Feed = (() => {
     return card;
   }
 
+  // Read reaction counts for a news item and mark which one the current user chose.
   async function loadReactions(card, newsId) {
     if (!DB.isReady()) return;
     const reactions = await DB.getReactions(newsId);
@@ -125,10 +132,12 @@ const Feed = (() => {
     });
   }
 
+  // When a reaction is clicked: ensure a user is selected, then toggle reaction
+  // in Firestore and refresh the UI for that card.
   async function handleReaction(card, newsId, emoji) {
     const userId = Users.getCurrent();
     if (!userId) {
-      Users.init(); // re-open modal
+      Users.init(); // prompt for name
       return;
     }
 
@@ -137,13 +146,14 @@ const Feed = (() => {
     await loadReactions(card, newsId);
   }
 
-  // Helpers
+  // -- Helper utilities used by the feed module --
   function stripHtml(html) {
     const tmp = document.createElement('div');
     tmp.innerHTML = html;
     return tmp.textContent || '';
   }
 
+  // Simple source extraction from a URL to show a friendly label.
   function extractSource(url) {
     try {
       const host = new URL(url).hostname.replace('www.', '');
@@ -166,6 +176,7 @@ const Feed = (() => {
     return `${days}d ago`;
   }
 
+  // Lightweight string hash to create a stable id for articles.
   function hashString(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {

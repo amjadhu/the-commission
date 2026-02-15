@@ -1,14 +1,17 @@
 const Takes = (() => {
+  // Setup entry point for takes UI: wire the form and load existing takes.
   function init() {
     setupForm();
     loadTakes();
   }
 
+  // Configure the take submission form: char counter, validation, and submit.
   function setupForm() {
     const form = document.getElementById('take-form');
     const input = document.getElementById('take-input');
     const counter = document.getElementById('char-count');
 
+    // Live character counter (280 char limit displayed)
     input.addEventListener('input', () => {
       counter.textContent = 280 - input.value.length;
     });
@@ -19,14 +22,15 @@ const Takes = (() => {
       const userId = Users.getCurrent();
 
       if (!userId) {
+        // Prompt the user to pick a name before posting
         Users.init();
         return;
       }
 
-      if (!text) return;
+      if (!text) return; // ignore empty submissions
 
       if (!DB.isReady()) {
-        // Local-only fallback
+        // Local-only fallback: save to localStorage and refresh UI
         addLocalTake(text, userId);
         input.value = '';
         counter.textContent = '280';
@@ -34,6 +38,7 @@ const Takes = (() => {
         return;
       }
 
+      // Disable submit while writing to Firestore, then refresh list
       const submitBtn = form.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
       await DB.addTake(text, userId);
@@ -44,6 +49,7 @@ const Takes = (() => {
     });
   }
 
+  // Load takes from Firestore if available, otherwise from localStorage.
   async function loadTakes() {
     const list = document.getElementById('takes-list');
 
@@ -65,10 +71,12 @@ const Takes = (() => {
     }
   }
 
+  // Build a single take card DOM node and wire vote buttons.
   async function createTakeCard(take) {
     const card = document.createElement('div');
     card.className = 'take-card';
 
+    // Read votes for this take (agree/disagree arrays)
     let votes = { agree: [], disagree: [] };
     if (DB.isReady()) {
       votes = await DB.getVotes(take.id);
@@ -94,6 +102,7 @@ const Takes = (() => {
       </div>
     `;
 
+    // Voting: require a selected user and Firestore availability.
     card.querySelectorAll('.vote-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         const userId = Users.getCurrent();
@@ -107,7 +116,7 @@ const Takes = (() => {
     return card;
   }
 
-  // Local-only fallback for takes when Firebase isn't configured
+  // Local-only fallback helpers: store/retrieve takes in localStorage.
   function getLocalTakes() {
     try {
       return JSON.parse(localStorage.getItem('commission_takes') || '[]');
@@ -127,6 +136,7 @@ const Takes = (() => {
     localStorage.setItem('commission_takes', JSON.stringify(takes.slice(0, 50)));
   }
 
+  // Small utility to show relative time for a timestamp.
   function timeAgo(ts) {
     const diff = Date.now() - ts;
     const mins = Math.floor(diff / 60000);
@@ -137,6 +147,7 @@ const Takes = (() => {
     return `${days}d ago`;
   }
 
+  // Escape user-provided text into safe HTML for display.
   function escapeHtml(str) {
     const div = document.createElement('div');
     div.textContent = str;
