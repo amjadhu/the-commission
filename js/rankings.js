@@ -137,11 +137,15 @@ const Rankings = (() => {
   }
 
   async function fetchESPNRankings() {
+    const ESPN_TO_APP = { WSH: 'WAS' };
     const url = 'https://site.web.api.espn.com/apis/fitt/v3/sports/football/nfl/powerindex?limit=32';
     const res = await fetch(url);
     if (!res.ok) throw new Error(`ESPN API returned ${res.status}`);
     const data = await res.json();
-    return data.teams.map(entry => entry.team.abbreviation);
+    return data.teams.map(entry => {
+      const abbr = entry.team.abbreviation;
+      return ESPN_TO_APP[abbr] || abbr;
+    });
   }
 
   function renderMyRankings() {
