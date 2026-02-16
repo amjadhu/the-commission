@@ -2,12 +2,12 @@
 // settings from the Firebase console (console.firebase.google.com).
 // If left as placeholders the app will run in local-only (no shared DB) mode.
 const FirebaseConfig = {
-  apiKey: 'YOUR_API_KEY',
-  authDomain: 'YOUR_PROJECT.firebaseapp.com',
-  projectId: 'YOUR_PROJECT_ID',
-  storageBucket: 'YOUR_PROJECT.appspot.com',
-  messagingSenderId: 'YOUR_SENDER_ID',
-  appId: 'YOUR_APP_ID'
+  apiKey: 'AIzaSyB0Q6Ca0U-lOt76KVW5jGraRTymkiQHxak',
+  authDomain: 'the-commission-9893b.firebaseapp.com',
+  projectId: 'the-commission-9893b',
+  storageBucket: 'the-commission-9893b.firebasestorage.app',
+  messagingSenderId: '73393302964',
+  appId: '1:73393302964:web:c702245c6ced77fc98d6e1'
 };
 
 // Runtime Firebase state. `db` holds the Firestore instance once initialized.
@@ -142,5 +142,32 @@ const DB = (() => {
     await batch.commit();
   }
 
-  return { init, isReady, getReactions, toggleReaction, getTakes, addTake, getVotes, castVote };
+  // Save a user's ranking (array of team abbreviations) to Firestore.
+  async function saveRanking(userId, ranking) {
+    if (!firebaseReady) return;
+    await db.collection('rankings').doc(userId).set({
+      ranking,
+      updatedAt: Date.now()
+    });
+  }
+
+  // Read a single user's ranking from Firestore.
+  async function getRanking(userId) {
+    if (!firebaseReady) return null;
+    const doc = await db.collection('rankings').doc(userId).get();
+    return doc.exists ? doc.data().ranking : null;
+  }
+
+  // Read all rankings. Returns { userId: [ranking], ... }
+  async function getAllRankings() {
+    if (!firebaseReady) return {};
+    const snap = await db.collection('rankings').get();
+    const result = {};
+    snap.forEach(doc => {
+      result[doc.id] = doc.data().ranking;
+    });
+    return result;
+  }
+
+  return { init, isReady, getReactions, toggleReaction, getTakes, addTake, getVotes, castVote, saveRanking, getRanking, getAllRankings };
 })();

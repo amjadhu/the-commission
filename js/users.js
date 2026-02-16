@@ -3,7 +3,7 @@ const Users = (() => {
   const STORAGE_KEY = 'commission_user';
 
   // Hardcoded friend group — edit this list to add/remove people shown in the modal.
-  const GROUP = ['Amjad', 'Chris', 'Mike', 'Jay', 'Rico'];
+  const GROUP = ['Amjad', 'James'];
 
   // `current` stores the selected user name or null when not chosen.
   let current = null;

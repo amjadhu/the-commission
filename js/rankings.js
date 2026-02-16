@@ -39,14 +39,24 @@ const Rankings = (() => {
   let myRanking = null;
   let draggedItem = null;
 
-  function init() {
-    loadRanking();
+  async function init() {
+    await loadRanking();
     render();
   }
 
-  function loadRanking() {
+  async function loadRanking() {
     const userId = Users.getCurrent();
     if (!userId) return;
+
+    // Try Firestore first, fall back to localStorage
+    if (DB.isReady()) {
+      try {
+        myRanking = await DB.getRanking(userId);
+        return;
+      } catch (e) {
+        console.warn('Firestore getRanking failed, using localStorage:', e);
+      }
+    }
 
     try {
       const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
@@ -56,21 +66,41 @@ const Rankings = (() => {
     }
   }
 
-  function saveRanking(ranking) {
+  async function saveRanking(ranking) {
     const userId = Users.getCurrent();
     if (!userId) return;
 
+    // Always save to localStorage as fallback
     try {
       const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
       all[userId] = ranking;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-      myRanking = ranking;
     } catch (e) {
-      console.error('Failed to save ranking:', e);
+      console.error('Failed to save ranking to localStorage:', e);
+    }
+
+    myRanking = ranking;
+
+    // Also save to Firestore if available
+    if (DB.isReady()) {
+      try {
+        await DB.saveRanking(userId, ranking);
+      } catch (e) {
+        console.warn('Firestore saveRanking failed:', e);
+      }
     }
   }
 
-  function getAllRankings() {
+  async function getAllRankings() {
+    // Try Firestore first, fall back to localStorage
+    if (DB.isReady()) {
+      try {
+        return await DB.getAllRankings();
+      } catch (e) {
+        console.warn('Firestore getAllRankings failed, using localStorage:', e);
+      }
+    }
+
     try {
       return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     } catch {
@@ -78,9 +108,9 @@ const Rankings = (() => {
     }
   }
 
-  function render() {
+  async function render() {
     const container = document.getElementById('rankings-content');
-    const allRankings = getAllRankings();
+    const allRankings = await getAllRankings();
     const rankedUsers = Object.keys(allRankings);
 
     // Show sub-tabs: My Rankings | Group View
@@ -103,7 +133,7 @@ const Rankings = (() => {
     });
 
     renderMyRankings();
-    renderGroupView();
+    await renderGroupView();
   }
 
   function renderMyRankings() {
@@ -142,11 +172,11 @@ const Rankings = (() => {
 
     setupDragAndDrop(document.getElementById('my-rankings-list'));
 
-    document.getElementById('save-rankings-btn').addEventListener('click', () => {
+    document.getElementById('save-rankings-btn').addEventListener('click', async () => {
       const items = document.querySelectorAll('#my-rankings-list .rank-item');
       const ranking = [...items].map(item => item.dataset.abbr);
-      saveRanking(ranking);
-      renderGroupView();
+      await saveRanking(ranking);
+      await renderGroupView();
       showSaveConfirmation();
     });
   }
@@ -240,9 +270,9 @@ const Rankings = (() => {
     });
   }
 
-  function renderGroupView() {
+  async function renderGroupView() {
     const panel = document.getElementById('rankings-group');
-    const allRankings = getAllRankings();
+    const allRankings = await getAllRankings();
     const users = Object.keys(allRankings);
 
     if (users.length === 0) {
