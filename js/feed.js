@@ -1,4 +1,79 @@
 const Feed = (() => {
+  // Wikipedia article slugs for the Fun Fact feature (Seahawks/NFL-weighted).
+  const WIKI_TOPICS = [
+    'Seattle_Seahawks', 'Super_Bowl_XLVIII', 'Marshawn_Lynch', '12th_man_(football)',
+    'Russell_Wilson', 'Steve_Largent', 'Shaun_Alexander', 'Matt_Hasselbeck',
+    'Cortez_Kennedy', 'Walter_Jones_(American_football)', 'Kenny_Easley',
+    'Seahawks–49ers_rivalry', 'CenturyLink_Field', 'Beast_Quake',
+    'Jim_Zorn', 'Chuck_Knox', 'Mike_Holmgren', 'Pete_Carroll',
+    'Kam_Chancellor', 'Earl_Thomas', 'Richard_Sherman_(American_football)',
+    'Bobby_Wagner', 'DK_Metcalf', 'Tyler_Lockett', 'Curt_Warner',
+    'Legion_of_Boom_(Seattle_Seahawks)', 'Seattle_Seahawks_draft_history',
+    'Super_Bowl', 'NFL_draft', 'Vince_Lombardi_Trophy', 'NFL_playoffs',
+    'Pro_Football_Hall_of_Fame', 'Monday_Night_Football', 'NFL_rivalry_game',
+    'Immaculate_Reception', 'The_Catch_(American_football)',
+    'Ice_Bowl', 'Hail_Mary_pass', 'Lambeau_Field', 'NFL_100_All-Time_Team',
+    'Tom_Brady', 'Jerry_Rice', 'Jim_Brown', 'Joe_Montana', 'Lawrence_Taylor',
+    'Walter_Payton', 'Johnny_Unitas', 'Red_zone_(gridiron_football)',
+    'Two-minute_warning', 'Salary_cap', 'NFL_Scouting_Combine'
+  ];
+
+  let lastFactIndex = -1;
+
+  async function fetchFunFact() {
+    let idx;
+    do {
+      idx = Math.floor(Math.random() * WIKI_TOPICS.length);
+    } while (idx === lastFactIndex && WIKI_TOPICS.length > 1);
+    lastFactIndex = idx;
+
+    const topic = WIKI_TOPICS[idx];
+    const resp = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(topic)}`);
+    if (!resp.ok) throw new Error('Wikipedia request failed');
+    const data = await resp.json();
+
+    // Truncate extract to ~3-4 sentences
+    const sentences = data.extract.match(/[^.!?]+[.!?]+/g) || [data.extract];
+    const extract = sentences.slice(0, 4).join(' ').trim();
+
+    return {
+      title: data.title,
+      extract,
+      thumbnail: data.thumbnail ? data.thumbnail.source : '',
+      url: data.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${topic}`
+    };
+  }
+
+  function showFunFactOverlay(fact) {
+    // Remove any existing overlay
+    const existing = document.querySelector('.fun-fact-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'fun-fact-overlay open';
+
+    const thumbHtml = fact.thumbnail
+      ? `<img class="fun-fact-thumb" src="${fact.thumbnail}" alt="">`
+      : '';
+
+    overlay.innerHTML = `
+      <div class="fun-fact-card">
+        <button class="fun-fact-close">&times;</button>
+        ${thumbHtml}
+        <h3 class="fun-fact-title">${fact.title}</h3>
+        <p class="fun-fact-extract">${fact.extract}</p>
+        <a class="fun-fact-link" href="${fact.url}" target="_blank" rel="noopener">Read more on Wikipedia</a>
+      </div>
+    `;
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.remove();
+    });
+    overlay.querySelector('.fun-fact-close').addEventListener('click', () => overlay.remove());
+
+    document.body.appendChild(overlay);
+  }
+
   // List of RSS feeds to aggregate. Add/remove sources here.
   const RSS_URLS = [
     'https://www.seahawks.com/news/rss.xml',
@@ -105,6 +180,32 @@ const Feed = (() => {
 
     feedList.innerHTML = '';
     feedList.appendChild(filterBar);
+
+    // Fun Fact button
+    const funFactBtn = document.createElement('button');
+    funFactBtn.className = 'fun-fact-btn';
+    funFactBtn.textContent = 'Fun Fact';
+    funFactBtn.addEventListener('click', async () => {
+      funFactBtn.disabled = true;
+      funFactBtn.textContent = 'Loading...';
+      // Remove any previous error message
+      const prevErr = feedList.querySelector('.fun-fact-error');
+      if (prevErr) prevErr.remove();
+      try {
+        const fact = await fetchFunFact();
+        showFunFactOverlay(fact);
+      } catch (e) {
+        const errMsg = document.createElement('div');
+        errMsg.className = 'fun-fact-error';
+        errMsg.textContent = "Couldn't load fact, try again.";
+        funFactBtn.after(errMsg);
+      } finally {
+        funFactBtn.disabled = false;
+        funFactBtn.textContent = 'Fun Fact';
+      }
+    });
+    feedList.appendChild(funFactBtn);
+
     articles.forEach(article => {
       feedList.appendChild(createNewsCard(article));
     });
