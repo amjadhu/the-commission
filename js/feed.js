@@ -66,10 +66,17 @@ const Feed = (() => {
       </div>
     `;
 
+    function dismissOverlay() {
+      overlay.classList.add('closing');
+      const onEnd = () => overlay.remove();
+      overlay.addEventListener('animationend', onEnd, { once: true });
+      setTimeout(onEnd, 400); // fallback
+    }
+
     overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) overlay.remove();
+      if (e.target === overlay) dismissOverlay();
     });
-    overlay.querySelector('.fun-fact-close').addEventListener('click', () => overlay.remove());
+    overlay.querySelector('.fun-fact-close').addEventListener('click', dismissOverlay);
 
     document.body.appendChild(overlay);
   }
@@ -206,8 +213,11 @@ const Feed = (() => {
     });
     feedList.appendChild(funFactBtn);
 
-    articles.forEach(article => {
-      feedList.appendChild(createNewsCard(article));
+    articles.forEach((article, i) => {
+      const card = createNewsCard(article);
+      card.classList.add('card-enter');
+      card.style.animationDelay = `${i * 60}ms`;
+      feedList.appendChild(card);
     });
   }
 

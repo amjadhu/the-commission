@@ -23,7 +23,9 @@ function setupTabs() {
       views.forEach(v => v.classList.remove('active'));
 
       tab.classList.add('active');
-      document.getElementById(`view-${target}`).classList.add('active');
+      const targetView = document.getElementById(`view-${target}`);
+      targetView.classList.add('active');
+      void targetView.offsetWidth; // force reflow so view animation restarts
 
       // When switching to the takes view we reload the list to show fresh data
       if (target === 'takes') {

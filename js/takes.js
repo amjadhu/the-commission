@@ -66,8 +66,11 @@ const Takes = (() => {
     }
 
     list.innerHTML = '';
-    for (const take of takes) {
-      list.appendChild(await createTakeCard(take));
+    for (let i = 0; i < takes.length; i++) {
+      const card = await createTakeCard(takes[i]);
+      card.classList.add('card-enter');
+      card.style.animationDelay = `${i * 60}ms`;
+      list.appendChild(card);
     }
   }
 
