@@ -393,6 +393,33 @@ body {
   margin-bottom: 8px;
 }
 
+.take-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.take-delete-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color var(--transition-speed), background var(--transition-speed);
+}
+
+.take-delete-btn:hover {
+  color: var(--danger);
+  background: #fef2f2;
+}
+
+.take-delete-btn:active {
+  transform: scale(0.9);
+}
+
 .take-author {
   font-size: 0.85rem;
   font-weight: 600;

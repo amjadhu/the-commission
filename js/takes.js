@@ -88,11 +88,15 @@ const Takes = (() => {
     const userId = Users.getCurrent();
     const userVote = votes.agree.includes(userId) ? 'agree'
       : votes.disagree.includes(userId) ? 'disagree' : null;
+    const isOwner = userId && take.authorId === userId;
 
     card.innerHTML = `
       <div class="take-card-header">
         <span class="take-author">${take.authorId}</span>
-        <span class="take-time">${timeAgo(take.timestamp)}</span>
+        <div class="take-header-right">
+          <span class="take-time">${timeAgo(take.timestamp)}</span>
+          ${isOwner ? '<button class="take-delete-btn" title="Delete take">&times;</button>' : ''}
+        </div>
       </div>
       <p class="take-text">${escapeHtml(take.text)}</p>
       <div class="take-votes">
@@ -116,6 +120,19 @@ const Takes = (() => {
       });
     });
 
+    // Delete: only shown for the take's author.
+    const deleteBtn = card.querySelector('.take-delete-btn');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', async () => {
+        if (DB.isReady()) {
+          await DB.deleteTake(take.id);
+        } else {
+          deleteLocalTake(take.id);
+        }
+        await loadTakes();
+      });
+    }
+
     return card;
   }
 
@@ -126,6 +143,11 @@ const Takes = (() => {
     } catch {
       return [];
     }
+  }
+
+  function deleteLocalTake(takeId) {
+    const takes = getLocalTakes().filter(t => t.id !== takeId);
+    localStorage.setItem('commission_takes', JSON.stringify(takes));
   }
 
   function addLocalTake(text, authorId) {

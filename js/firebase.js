@@ -169,5 +169,15 @@ const DB = (() => {
     return result;
   }
 
-  return { init, isReady, getReactions, toggleReaction, getTakes, addTake, getVotes, castVote, saveRanking, getRanking, getAllRankings };
+  // Delete a take and all its associated votes.
+  async function deleteTake(takeId) {
+    if (!firebaseReady) return;
+    const batch = db.batch();
+    batch.delete(db.collection('takes').doc(takeId));
+    const votes = await db.collection('votes').where('takeId', '==', takeId).get();
+    votes.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+  }
+
+  return { init, isReady, getReactions, toggleReaction, getTakes, addTake, deleteTake, getVotes, castVote, saveRanking, getRanking, getAllRankings };
 })();
