@@ -505,10 +505,40 @@ body {
   display: block;
 }
 
+.rankings-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 10px;
+}
+
+.rankings-toolbar .rankings-hint {
+  margin-bottom: 0;
+}
+
 .rankings-hint {
   font-size: 0.85rem;
   color: var(--text-secondary);
   margin-bottom: 12px;
+}
+
+.btn-espn {
+  background: var(--navy);
+  color: var(--text-on-dark);
+  white-space: nowrap;
+  font-size: 0.8rem;
+  padding: 6px 14px;
+}
+
+.btn-espn:hover {
+  background: var(--green);
+  color: var(--navy);
+}
+
+.btn-espn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .rankings-list {

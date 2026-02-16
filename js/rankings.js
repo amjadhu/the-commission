@@ -136,6 +136,14 @@ const Rankings = (() => {
     await renderGroupView();
   }
 
+  async function fetchESPNRankings() {
+    const url = 'https://site.web.api.espn.com/apis/fitt/v3/sports/football/nfl/powerindex?limit=32';
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`ESPN API returned ${res.status}`);
+    const data = await res.json();
+    return data.teams.map(entry => entry.team.abbreviation);
+  }
+
   function renderMyRankings() {
     const panel = document.getElementById('rankings-my');
     const userId = Users.getCurrent();
@@ -155,7 +163,10 @@ const Rankings = (() => {
         });
 
     panel.innerHTML = `
-      <p class="rankings-hint">Drag teams to rank them 1-32. Your #1 is the best team in the NFL.</p>
+      <div class="rankings-toolbar">
+        <p class="rankings-hint">Drag teams to rank them 1-32. Your #1 is the best team in the NFL.</p>
+        <button class="btn btn-espn" id="espn-rankings-btn">Use ESPN Rankings</button>
+      </div>
       <div class="rankings-list" id="my-rankings-list">
         ${teams.map((team, i) => `
           <div class="rank-item ${team.abbr === 'SEA' ? 'rank-seahawks' : ''}" draggable="true" data-abbr="${team.abbr}">
@@ -171,6 +182,34 @@ const Rankings = (() => {
     `;
 
     setupDragAndDrop(document.getElementById('my-rankings-list'));
+
+    document.getElementById('espn-rankings-btn').addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      btn.textContent = 'Loading…';
+      try {
+        const espnOrder = await fetchESPNRankings();
+        const list = document.getElementById('my-rankings-list');
+        const itemsByAbbr = {};
+        list.querySelectorAll('.rank-item').forEach(el => {
+          itemsByAbbr[el.dataset.abbr] = el;
+        });
+        espnOrder.forEach((abbr, i) => {
+          const item = itemsByAbbr[abbr];
+          if (item) {
+            list.appendChild(item);
+            item.querySelector('.rank-number').textContent = i + 1;
+          }
+        });
+        btn.textContent = 'Use ESPN Rankings';
+        btn.disabled = false;
+      } catch (err) {
+        console.error('Failed to fetch ESPN rankings:', err);
+        btn.textContent = 'Failed — try again';
+        btn.disabled = false;
+        setTimeout(() => { btn.textContent = 'Use ESPN Rankings'; }, 2000);
+      }
+    });
 
     document.getElementById('save-rankings-btn').addEventListener('click', async () => {
       const items = document.querySelectorAll('#my-rankings-list .rank-item');
