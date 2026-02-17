@@ -61,6 +61,14 @@ const Game = (() => {
     return `https://a.espncdn.com/i/teamlogos/nfl/500/${abbr.toLowerCase()}.png`;
   }
 
+  // ESPN returns score as either a plain string "21" or an object { value: 21, displayValue: "21" }
+  function getScore(competitor) {
+    const s = competitor?.score;
+    if (s == null) return '0';
+    if (typeof s === 'string' || typeof s === 'number') return String(s);
+    return s.displayValue ?? s.value ?? '0';
+  }
+
   function renderCard(container, event) {
     const comp = event.competitions[0];
     const state = comp.status.type.state;
@@ -141,8 +149,8 @@ const Game = (() => {
   }
 
   function renderLive(container, comp, sea, opp) {
-    const seaScore = sea.score ?? '0';
-    const oppScore = opp.score ?? '0';
+    const seaScore = getScore(sea);
+    const oppScore = getScore(opp);
     const clock = comp.status.displayClock || '';
     const period = comp.status.period || 1;
     const periodLabel = period > 4 ? 'OT' : `Q${period}`;
@@ -178,8 +186,8 @@ const Game = (() => {
   }
 
   function renderFinal(container, comp, sea, opp) {
-    const seaScore = sea.score ?? '0';
-    const oppScore = opp.score ?? '0';
+    const seaScore = getScore(sea);
+    const oppScore = getScore(opp);
     const seaWon = parseInt(seaScore) > parseInt(oppScore);
     const oppName = opp.team.shortDisplayName || opp.team.abbreviation;
     const resultClass = seaWon ? 'game-result--win' : 'game-result--loss';
