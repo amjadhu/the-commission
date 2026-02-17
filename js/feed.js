@@ -186,6 +186,10 @@ const Feed = (() => {
     });
 
     feedList.innerHTML = '';
+
+    const summary = generateFeedSummary(allArticles);
+    if (summary) feedList.appendChild(renderSummaryCard(summary));
+
     feedList.appendChild(filterBar);
 
     // Fun Fact button
@@ -288,6 +292,66 @@ const Feed = (() => {
     if (!DB.isReady()) return;
     await DB.toggleReaction(newsId, emoji, userId);
     await loadReactions(card, newsId);
+  }
+
+  // Build a one-paragraph briefing from article titles — no external API needed.
+  function generateFeedSummary(articles) {
+    if (!articles.length) return null;
+
+    const top = articles.slice(0, 15);
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+    // Tally source distribution
+    const sourceCounts = {};
+    top.forEach(a => { sourceCounts[a.source] = (sourceCounts[a.source] || 0) + 1; });
+    const topSources = Object.entries(sourceCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([s]) => s);
+
+    const sourceList = topSources.length > 1
+      ? topSources.slice(0, -1).join(', ') + ' and ' + topSources[topSources.length - 1]
+      : topSources[0] || 'multiple outlets';
+
+    // Find the most-mentioned meaningful words across titles
+    const stopWords = new Set([
+      'the','a','an','is','it','in','on','at','to','for','of','and','or','but',
+      'with','he','his','her','they','their','this','that','was','are','has',
+      'have','had','not','from','after','over','as','up','by','be','been','will',
+      'would','could','should','its','new','than','more','about','how','who',
+      'what','when','where','why','nfl','game','season','team','week','year',
+      'says','said','report','reports','per','into','out','off','just','back'
+    ]);
+    const wordFreq = {};
+    top.forEach(a => {
+      a.title.toLowerCase().replace(/[^a-z\s]/g, '').split(/\s+/).forEach(word => {
+        if (word.length > 3 && !stopWords.has(word)) {
+          wordFreq[word] = (wordFreq[word] || 0) + 1;
+        }
+      });
+    });
+    const topWords = Object.entries(wordFreq)
+      .filter(([, count]) => count > 1)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([w]) => w.charAt(0).toUpperCase() + w.slice(1));
+
+    let summary = `${today} — ${articles.length} stories from ${sourceList}.`;
+    if (topWords.length >= 2) {
+      summary += ` The buzz today: ${topWords.join(', ')}.`;
+    }
+    summary += ` Top story: "${top[0].title}."`;
+    return summary;
+  }
+
+  function renderSummaryCard(text) {
+    const card = document.createElement('div');
+    card.className = 'feed-summary';
+    card.innerHTML = `
+      <span class="feed-summary-label">Today's Briefing</span>
+      <p class="feed-summary-text">${text}</p>
+    `;
+    return card;
   }
 
   // -- Helper utilities used by the feed module --
