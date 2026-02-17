@@ -600,6 +600,31 @@ body {
   to { transform: rotate(360deg); }
 }
 
+/* === Feed Summary Briefing Card === */
+.feed-summary {
+  background: linear-gradient(135deg, var(--navy) 0%, #003a66 100%);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin-bottom: 12px;
+  animation: fadeInUp 0.35s ease both;
+}
+
+.feed-summary-label {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 6px;
+}
+
+.feed-summary-text {
+  font-size: 0.85rem;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.88);
+}
+
 /* === Feed Filters === */
 .feed-filters {
   display: flex;
