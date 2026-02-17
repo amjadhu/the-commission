@@ -124,6 +124,7 @@ const Takes = (() => {
     const deleteBtn = card.querySelector('.take-delete-btn');
     if (deleteBtn) {
       deleteBtn.addEventListener('click', async () => {
+        if (!confirm('Delete this hot take? This can\'t be undone.')) return;
         if (DB.isReady()) {
           await DB.deleteTake(take.id);
         } else {
