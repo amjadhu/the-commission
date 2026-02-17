@@ -3,6 +3,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   DB.init();     // initialize Firebase wrapper (may be local-only)
   Users.init();  // setup user selection + stored identity
+  Game.init();   // load Seahawks next game / live score card
   Feed.init();   // load and render RSS feed
   Takes.init();  // setup takes UI and form handling
   Rankings.init();
