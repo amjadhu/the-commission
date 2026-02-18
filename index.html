@@ -22,6 +22,7 @@
     <button class="tab active" data-view="feed">Feed</button>
     <button class="tab" data-view="takes">Hot Takes</button>
     <button class="tab" data-view="rankings">Rankings</button>
+    <button class="tab" data-view="history">History</button>
   </nav>
 
   <main class="app-main">
@@ -50,6 +51,12 @@
         <!-- Rankings rendered here -->
       </div>
     </section>
+
+    <section id="view-history" class="view">
+      <div id="history-content" class="card-list">
+        <!-- History cards rendered here -->
+      </div>
+    </section>
   </main>
 
   <!-- User selection modal -->
@@ -70,6 +77,7 @@
   <script src="js/takes.js"></script>
   <script src="js/rankings.js"></script>
   <script src="js/game.js"></script>
+  <script src="js/history.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
