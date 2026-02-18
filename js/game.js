@@ -1,5 +1,5 @@
 const Game = (() => {
-  const SCHEDULE_URL =
+  const BASE_URL =
     'https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/sea/schedule';
 
   let countdownTimer = null;
@@ -14,10 +14,20 @@ const Game = (() => {
     if (!container) return;
 
     try {
-      const res = await fetch(SCHEDULE_URL);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      const events = data.events || [];
+      // Fetch regular season (seasontype=2) and postseason (seasontype=3) in parallel
+      const [regRes, postRes] = await Promise.all([
+        fetch(`${BASE_URL}?seasontype=2`),
+        fetch(`${BASE_URL}?seasontype=3`),
+      ]);
+      const regData = regRes.ok ? await regRes.json() : {};
+      const postData = postRes.ok ? await postRes.json() : {};
+
+      // Merge and sort by date so findRelevantGame sees them in order
+      const events = [
+        ...(regData.events || []),
+        ...(postData.events || []),
+      ].sort((a, b) => new Date(a.date) - new Date(b.date));
+
       const game = findRelevantGame(events);
 
       if (!game) {
