@@ -156,11 +156,15 @@ const Game = (() => {
     const periodLabel = period > 4 ? 'OT' : `Q${period}`;
     const oppName = opp.team.shortDisplayName || opp.team.abbreviation;
     const seaLeading = parseInt(seaScore) >= parseInt(oppScore);
+    const gameDate = new Date(comp.date || comp.status?.type?.date);
+    const dateStr = isNaN(gameDate) ? '' : gameDate.toLocaleDateString('en-US', {
+      weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+    });
 
     container.innerHTML = `
       <div class="game-card game-card--live">
         <div class="game-card-header">
-          <span class="game-card-label"><span class="live-dot"></span> LIVE</span>
+          <span class="game-card-label"><span class="live-dot"></span> LIVE${dateStr ? ` · ${dateStr}` : ''}</span>
           <span class="game-card-clock">${clock} · ${periodLabel}</span>
         </div>
         <div class="game-card-matchup">
@@ -191,11 +195,15 @@ const Game = (() => {
     const seaWon = parseInt(seaScore) > parseInt(oppScore);
     const oppName = opp.team.shortDisplayName || opp.team.abbreviation;
     const resultClass = seaWon ? 'game-result--win' : 'game-result--loss';
+    const gameDate = new Date(comp.date || comp.status?.type?.date);
+    const dateStr = isNaN(gameDate) ? '' : gameDate.toLocaleDateString('en-US', {
+      weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+    });
 
     container.innerHTML = `
       <div class="game-card game-card--final">
         <div class="game-card-header">
-          <span class="game-card-label">Final</span>
+          <span class="game-card-label">Final${dateStr ? ` · ${dateStr}` : ''}</span>
           <span class="game-result ${resultClass}">${seaWon ? 'W' : 'L'}</span>
         </div>
         <div class="game-card-matchup">
