@@ -7,7 +7,7 @@ const SUPABASE_DB = (() => {
   // Initialize Supabase client using credentials from window.CONFIG
   function init() {
     if (!window.CONFIG) {
-      console.warn('Supabase config not found. Copy js/config.local.example.js to js/config.local.js and fill in your credentials.');
+      console.warn('Supabase config not found. Copy config.local.example.js to config.local.js and fill in your credentials.');
       return;
     }
     if (window.CONFIG.SUPABASE_URL === 'YOUR_SUPABASE_URL') {
@@ -34,7 +34,7 @@ const SUPABASE_DB = (() => {
   // Implement these using Supabase queries when ready.
   async function getReactions(newsId) {
     if (!supabaseReady) return {};
-    console.log(`[DB] Reading reactions for newsId: ${newsId}`);
+    console.log('[DB] TODO: getReactions not implemented; returning empty reactions object');
     // TODO: query 'reactions' table and group by emoji
     return {};
   }

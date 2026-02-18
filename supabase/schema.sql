@@ -36,6 +36,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS votes_unique ON votes (take_id, user_id);
 -- Rankings: saved per-user ranking
 CREATE TABLE IF NOT EXISTS rankings (
   user_id text PRIMARY KEY,
-  ranking jsonb,
-  updated_at bigint
+  ranking jsonb NOT NULL,
+  updated_at bigint NOT NULL
 );

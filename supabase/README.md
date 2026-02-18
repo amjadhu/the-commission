@@ -15,16 +15,16 @@ This folder contains the database schema for The Commission app.
 The `schema.sql` file creates four tables:
 
 - **reactions** — Stores emoji reactions to news articles
-  - `id`, `newsId`, `emoji`, `userId`, `timestamp`
+  - `id`, `news_id`, `emoji`, `user_id`, `timestamp`
 
 - **takes** — Stores user posts/opinions
-  - `id`, `text`, `authorId`, `timestamp`
+  - `id`, `text`, `author_id`, `timestamp`
 
 - **votes** — Stores agree/disagree votes on takes
-  - `id`, `takeId`, `vote` (enum: 'agree'|'disagree'), `userId`, `timestamp`
+  - `id`, `take_id`, `vote` (enum: 'agree'|'disagree'), `user_id`, `timestamp`
 
 - **rankings** — Stores each user's team rankings
-  - `userId` (primary key), `ranking` (array of team abbreviations), `updatedAt`
+  - `user_id` (primary key), `ranking` (jsonb JSON structure of team abbreviations), `updated_at`
 
 All timestamps are stored as `bigint` milliseconds to match JavaScript's `Date.now()` usage in the app.
 
