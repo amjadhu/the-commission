@@ -1,25 +1,37 @@
-Supabase setup for The Commission
+# Supabase Database Schema
 
-1) Create a Supabase project
-   - Use the Supabase web dashboard (recommended) or the Supabase CLI.
-   - From the dashboard, go to Settings → API to copy the Project URL and anon key.
+This folder contains the database schema for The Commission app.
 
-2) Set credentials
-   - Copy .env.template to .env or set these environment variables:
-     SUPABASE_URL=your_project_url
-     SUPABASE_ANON_KEY=your_anon_key
-   - (Optional) For server-side migrations or admin tasks use the service_role key but store it securely.
+## Setup Instructions
 
-3) Apply the schema
-   - Option A (SQL editor): Open the Supabase SQL editor in the dashboard and run supabase/schema.sql
-   - Option B (psql): psql "<connection-string>" -f supabase/schema.sql (get connection string from Project → Settings → Database)
-   - Option C (local dev): use 'supabase start' for a local Postgres and psql against it.
+**See the main [README.md](../README.md) for complete Supabase setup instructions**, including:
+- Creating a Supabase project
+- Getting your credentials
+- Configuring `js/config.local.js`
+- Applying the database schema
 
-4) Wire the client
-   - Include the Supabase JS SDK in index.html, e.g:
-     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-   - Use createClient(SUPABASE_URL, SUPABASE_ANON_KEY) and replace DB.* usage with the adapter in js/supabase.js
+## Schema Details
 
-Notes
- - The SQL creates tables matching the app's Firestore usage: reactions, takes, votes, rankings.
- - Timestamps are stored as bigint milliseconds to match Date.now() usage in the app.
+The `schema.sql` file creates four tables:
+
+- **reactions** — Stores emoji reactions to news articles
+  - `id`, `newsId`, `emoji`, `userId`, `timestamp`
+
+- **takes** — Stores user posts/opinions
+  - `id`, `text`, `authorId`, `timestamp`
+
+- **votes** — Stores agree/disagree votes on takes
+  - `id`, `takeId`, `vote` (enum: 'agree'|'disagree'), `userId`, `timestamp`
+
+- **rankings** — Stores each user's team rankings
+  - `userId` (primary key), `ranking` (array of team abbreviations), `updatedAt`
+
+All timestamps are stored as `bigint` milliseconds to match JavaScript's `Date.now()` usage in the app.
+
+## Applying the Schema
+
+Once you have a Supabase project, apply the schema using the SQL Editor:
+
+1. Go to Supabase **SQL Editor** → **New query**
+2. Copy and run the SQL from `supabase/schema.sql`
+3. The tables are now ready to use

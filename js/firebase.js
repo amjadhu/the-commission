@@ -32,6 +32,7 @@ const DB = (() => {
       firebase.initializeApp(FirebaseConfig);
       db = firebase.firestore();
       firebaseReady = true;
+      console.log('✓ Database connected: Firebase Firestore ready');
     } catch (e) {
       console.error('Firebase init failed:', e);
     }
@@ -46,6 +47,7 @@ const DB = (() => {
   // Returns an object like { '🔥': ['Alice','Bob'], '💀': ['Chris'] }
   async function getReactions(newsId) {
     if (!firebaseReady) return {};
+    console.log(`[DB] Reading reactions for newsId: ${newsId}`);
     const snap = await db.collection('reactions')
       .where('newsId', '==', newsId)
       .get();
@@ -55,6 +57,7 @@ const DB = (() => {
       if (!reactions[d.emoji]) reactions[d.emoji] = [];
       reactions[d.emoji].push(d.userId);
     });
+    console.log(`[DB] Got ${snap.size} reaction documents for newsId: ${newsId}`);
     return reactions;
   }
 
@@ -62,6 +65,7 @@ const DB = (() => {
   // (returns false); otherwise a new reaction doc is added (returns true).
   async function toggleReaction(newsId, emoji, userId) {
     if (!firebaseReady) return null;
+    console.log(`[DB] Toggling reaction: emoji=${emoji} for newsId=${newsId} by userId=${userId}`);
     const ref = db.collection('reactions');
     const existing = await ref
       .where('newsId', '==', newsId)
@@ -72,10 +76,12 @@ const DB = (() => {
     if (!existing.empty) {
       // Remove existing reaction (toggle off)
       existing.forEach(doc => doc.ref.delete());
+      console.log(`[DB] Reaction removed`);
       return false; // removed
     } else {
       // Add new reaction
       await ref.add({ newsId, emoji, userId, timestamp: Date.now() });
+      console.log(`[DB] Reaction added`);
       return true; // added
     }
   }
@@ -83,27 +89,32 @@ const DB = (() => {
   // Fetch recent 'takes' (hot opinions). Returns up to 50 takes ordered by time.
   async function getTakes() {
     if (!firebaseReady) return [];
+    console.log('[DB] Reading takes from database');
     const snap = await db.collection('takes')
       .orderBy('timestamp', 'desc')
       .limit(50)
       .get();
+    console.log(`[DB] Retrieved ${snap.size} takes`);
     return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   }
 
   // Add a new take into Firestore and return the created document id.
   async function addTake(text, authorId) {
     if (!firebaseReady) return null;
+    console.log(`[DB] Adding take from userId: ${authorId}`);
     const ref = await db.collection('takes').add({
       text,
       authorId,
       timestamp: Date.now()
     });
+    console.log(`[DB] Take added with id: ${ref.id}`);
     return ref.id;
   }
 
   // Votes are stored as individual documents. Read them and group by side.
   async function getVotes(takeId) {
     if (!firebaseReady) return { agree: [], disagree: [] };
+    console.log(`[DB] Reading votes for takeId: ${takeId}`);
     const snap = await db.collection('votes')
       .where('takeId', '==', takeId)
       .get();
@@ -112,6 +123,7 @@ const DB = (() => {
       const d = doc.data();
       votes[d.vote].push(d.userId);
     });
+    console.log(`[DB] Got ${snap.size} vote documents for takeId: ${takeId}`);
     return votes;
   }
 
@@ -120,6 +132,7 @@ const DB = (() => {
   // If the user clicked the same side again we interpret that as a toggle-off.
   async function castVote(takeId, vote, userId) {
     if (!firebaseReady) return;
+    console.log(`[DB] Casting vote: ${vote} on takeId=${takeId} by userId=${userId}`);
     const ref = db.collection('votes');
     // Remove any existing vote by this user on this take
     const existing = await ref
@@ -138,6 +151,9 @@ const DB = (() => {
     if (!toggled) {
       // Add the new vote since it wasn't a toggle-off
       batch.set(ref.doc(), { takeId, vote, userId, timestamp: Date.now() });
+      console.log(`[DB] Vote ${vote} added`);
+    } else {
+      console.log(`[DB] Vote toggle off`);
     }
     await batch.commit();
   }
@@ -145,38 +161,46 @@ const DB = (() => {
   // Save a user's ranking (array of team abbreviations) to Firestore.
   async function saveRanking(userId, ranking) {
     if (!firebaseReady) return;
+    console.log(`[DB] Saving ranking for userId: ${userId}`);
     await db.collection('rankings').doc(userId).set({
       ranking,
       updatedAt: Date.now()
     });
+    console.log(`[DB] Ranking saved for userId: ${userId}`);
   }
 
   // Read a single user's ranking from Firestore.
   async function getRanking(userId) {
     if (!firebaseReady) return null;
+    console.log(`[DB] Reading ranking for userId: ${userId}`);
     const doc = await db.collection('rankings').doc(userId).get();
+    console.log(`[DB] Ranking ${doc.exists ? 'found' : 'not found'} for userId: ${userId}`);
     return doc.exists ? doc.data().ranking : null;
   }
 
   // Read all rankings. Returns { userId: [ranking], ... }
   async function getAllRankings() {
     if (!firebaseReady) return {};
+    console.log('[DB] Reading all rankings from database');
     const snap = await db.collection('rankings').get();
     const result = {};
     snap.forEach(doc => {
       result[doc.id] = doc.data().ranking;
     });
+    console.log(`[DB] Retrieved rankings for ${snap.size} users`);
     return result;
   }
 
   // Delete a take and all its associated votes.
   async function deleteTake(takeId) {
     if (!firebaseReady) return;
+    console.log(`[DB] Deleting take: ${takeId}`);
     const batch = db.batch();
     batch.delete(db.collection('takes').doc(takeId));
     const votes = await db.collection('votes').where('takeId', '==', takeId).get();
     votes.forEach(doc => batch.delete(doc.ref));
     await batch.commit();
+    console.log(`[DB] Take deleted: ${takeId} and associated votes`);
   }
 
   return { init, isReady, getReactions, toggleReaction, getTakes, addTake, deleteTake, getVotes, castVote, saveRanking, getRanking, getAllRankings };
