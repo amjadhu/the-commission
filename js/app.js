@@ -1,13 +1,14 @@
 // App entry: wire up modules once the DOM is ready. This ensures elements exist
 // before modules try to read or write to the DOM.
 document.addEventListener('DOMContentLoaded', () => {
-  DB.init();     // initialize Firebase wrapper (may be local-only)
-  Users.init();  // setup user selection + stored identity
-  Game.init();   // load Seahawks next game / live score card
-  Feed.init();   // load and render RSS feed
-  Takes.init();  // setup takes UI and form handling
+  DB.init();      // initialize Firebase wrapper (may be local-only)
+  Users.init();   // setup user selection + stored identity
+  Game.init();    // load Seahawks next game / live score card
+  Feed.init();    // load and render RSS feed
+  Takes.init();   // setup takes UI and form handling
   Rankings.init();
-  setupTabs();   // tab navigation behavior
+  History.init(); // deferred — loads on first tab visit
+  setupTabs();    // tab navigation behavior
 });
 
 // Simple tab system: show/hide views and refresh certain views on switch.
@@ -33,6 +34,8 @@ function setupTabs() {
         Takes.loadTakes();
       } else if (target === 'rankings') {
         Rankings.render();
+      } else if (target === 'history') {
+        History.load(); // fetches current season on first visit, then re-renders from cache
       }
     });
   });
