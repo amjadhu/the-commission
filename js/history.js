@@ -53,6 +53,8 @@ const History = (() => {
     { year: 2021, w:  7, l: 10, t: 0 },
     { year: 2022, w:  9, l:  8, t: 0, playoff: 'WC'   },
     { year: 2023, w:  9, l:  8, t: 0 },
+    { year: 2024, w: 10, l:  7, t: 0 },
+    { year: 2025, w: 14, l:  3, t: 0, playoff: 'SB-W' }, // Super Bowl LX WIN
   ];
 
   // Notable annotations shown on hover / below landmark bars
@@ -62,6 +64,7 @@ const History = (() => {
     2013: '🏆 SB Win',
     2014: 'SB XLIX',
     2010: 'Beast Quake',
+    2025: '🏆 SB Win',
   };
 
   const PLAYOFF_HISTORY = [
@@ -86,6 +89,7 @@ const History = (() => {
     { year: 2019, result: 'Divisional Round',  note: 'Beat Philly, lost at Green Bay' },
     { year: 2020, result: 'Wild Card',          note: 'Lost to LA Rams' },
     { year: 2022, result: 'Wild Card',          note: 'Lost to San Francisco' },
+    { year: 2025, result: 'Super Bowl LX 🏆',  note: 'Beat New England 29–13', sb: true, won: true },
   ];
 
   const LEADERS = {
