@@ -17,7 +17,7 @@
                BlueprintIdentifier = "504EC3031FED79650016851F"
                BuildableName = "The Commission - Sports.app"
                BlueprintName = "The Commission - Sports"
-               ReferencedContainer = "container:The Commission - Sports.xcodeproj">
+               ReferencedContainer = "container:App.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -47,7 +47,7 @@
             BlueprintIdentifier = "504EC3031FED79650016851F"
             BuildableName = "The Commission - Sports.app"
             BlueprintName = "The Commission - Sports"
-            ReferencedContainer = "container:The Commission - Sports.xcodeproj">
+            ReferencedContainer = "container:App.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -64,7 +64,7 @@
             BlueprintIdentifier = "504EC3031FED79650016851F"
             BuildableName = "The Commission - Sports.app"
             BlueprintName = "The Commission - Sports"
-            ReferencedContainer = "container:The Commission - Sports.xcodeproj">
+            ReferencedContainer = "container:App.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

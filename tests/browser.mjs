@@ -144,27 +144,38 @@ try {
     // Vote persistence (requires DB): click agree, verify active state toggle
     const dbReadyForVotes = await page.evaluate(() => typeof DB !== 'undefined' && DB.isReady());
     if (dbReadyForVotes) {
-      const agreeBtn = await page.$('.take-card .vote-btn.agree, .take-card .vote-btn[data-vote="agree"]');
-      const disagreeBtn = await page.$('.take-card .vote-btn.disagree, .take-card .vote-btn[data-vote="disagree"]');
+      const agreeSelector = '.take-card .vote-btn.agree, .take-card .vote-btn[data-vote="agree"]';
+      const disagreeSelector = '.take-card .vote-btn.disagree, .take-card .vote-btn[data-vote="disagree"]';
+      const agreeBtn = await page.$(agreeSelector);
       if (agreeBtn) {
         await agreeBtn.click();
-        await page.waitForTimeout(500);
-        const agreeActive = await agreeBtn.evaluate(el => el.classList.contains('active'));
+        // Wait for list to re-render after DB write, then re-query fresh handles
+        await page.waitForTimeout(1000);
+        const agreeBtn2 = await page.$(agreeSelector);
+        const agreeActive = agreeBtn2
+          ? await agreeBtn2.evaluate(el => el.classList.contains('active'))
+          : false;
         agreeActive ? pass('Agree vote button active after click') : fail('Agree active', 'Not active');
 
-        // Switch to disagree
-        if (disagreeBtn) {
-          await disagreeBtn.click();
-          await page.waitForTimeout(500);
-          const disagreeActive = await disagreeBtn.evaluate(el => el.classList.contains('active'));
-          const agreeStillActive = await agreeBtn.evaluate(el => el.classList.contains('active'));
+        // Switch to disagree — re-query fresh handles
+        const disagreeBtn2 = await page.$(disagreeSelector);
+        if (disagreeBtn2) {
+          await disagreeBtn2.click();
+          await page.waitForTimeout(1000);
+          const agreeBtn3    = await page.$(agreeSelector);
+          const disagreeBtn3 = await page.$(disagreeSelector);
+          const disagreeActive   = disagreeBtn3 ? await disagreeBtn3.evaluate(el => el.classList.contains('active')) : false;
+          const agreeStillActive = agreeBtn3    ? await agreeBtn3.evaluate(el => el.classList.contains('active'))    : false;
           disagreeActive && !agreeStillActive ? pass('Vote switches from agree to disagree') : fail('Vote switch', `agree=${agreeStillActive} disagree=${disagreeActive}`);
 
           // Toggle off: click disagree again
-          await disagreeBtn.click();
-          await page.waitForTimeout(500);
-          const disagreeOff = await disagreeBtn.evaluate(el => el.classList.contains('active'));
-          !disagreeOff ? pass('Vote toggle off removes active class') : fail('Vote toggle off', 'Still active');
+          if (disagreeBtn3) {
+            await disagreeBtn3.click();
+            await page.waitForTimeout(1000);
+            const disagreeBtn4 = await page.$(disagreeSelector);
+            const disagreeOff  = disagreeBtn4 ? await disagreeBtn4.evaluate(el => el.classList.contains('active')) : false;
+            !disagreeOff ? pass('Vote toggle off removes active class') : fail('Vote toggle off', 'Still active');
+          }
         }
       }
     } else {

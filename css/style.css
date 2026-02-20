@@ -487,7 +487,8 @@ body {
 .btn {
   border: none;
   border-radius: 8px;
-  padding: 8px 18px;
+  padding: 12px 18px;
+  min-height: 44px;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
