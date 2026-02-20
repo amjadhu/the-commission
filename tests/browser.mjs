@@ -98,6 +98,21 @@ try {
       await reactionBtn.click();
       await page.waitForTimeout(300);
       pass('Reaction button click — no crash');
+
+      // Reaction persistence (requires DB): check active class toggle
+      const dbReady = await page.evaluate(() => typeof DB !== 'undefined' && DB.isReady());
+      if (dbReady) {
+        const isActive = await reactionBtn.evaluate(el => el.classList.contains('active'));
+        isActive ? pass('Reaction button has active class after click') : fail('Reaction active', 'Missing active class');
+
+        // Toggle off: click again, verify active class removed
+        await reactionBtn.click();
+        await page.waitForTimeout(300);
+        const isStillActive = await reactionBtn.evaluate(el => el.classList.contains('active'));
+        !isStillActive ? pass('Reaction toggle off removes active class') : fail('Reaction toggle off', 'Still active');
+      } else {
+        pass('Reaction persistence skipped (no DB configured)');
+      }
     }
   } else {
     pass('Feed empty/loading (RSS may be blocked — OK in test)');
@@ -125,6 +140,36 @@ try {
   if (takeCards.length > 0) {
     (await page.$('.take-author')) ? pass('Take shows author') : fail('Take author', 'Missing');
     (await page.$('.take-votes')) ? pass('Take has vote buttons') : fail('Take votes', 'Missing');
+
+    // Vote persistence (requires DB): click agree, verify active state toggle
+    const dbReadyForVotes = await page.evaluate(() => typeof DB !== 'undefined' && DB.isReady());
+    if (dbReadyForVotes) {
+      const agreeBtn = await page.$('.take-card .vote-btn.agree, .take-card .vote-btn[data-vote="agree"]');
+      const disagreeBtn = await page.$('.take-card .vote-btn.disagree, .take-card .vote-btn[data-vote="disagree"]');
+      if (agreeBtn) {
+        await agreeBtn.click();
+        await page.waitForTimeout(500);
+        const agreeActive = await agreeBtn.evaluate(el => el.classList.contains('active'));
+        agreeActive ? pass('Agree vote button active after click') : fail('Agree active', 'Not active');
+
+        // Switch to disagree
+        if (disagreeBtn) {
+          await disagreeBtn.click();
+          await page.waitForTimeout(500);
+          const disagreeActive = await disagreeBtn.evaluate(el => el.classList.contains('active'));
+          const agreeStillActive = await agreeBtn.evaluate(el => el.classList.contains('active'));
+          disagreeActive && !agreeStillActive ? pass('Vote switches from agree to disagree') : fail('Vote switch', `agree=${agreeStillActive} disagree=${disagreeActive}`);
+
+          // Toggle off: click disagree again
+          await disagreeBtn.click();
+          await page.waitForTimeout(500);
+          const disagreeOff = await disagreeBtn.evaluate(el => el.classList.contains('active'));
+          !disagreeOff ? pass('Vote toggle off removes active class') : fail('Vote toggle off', 'Still active');
+        }
+      }
+    } else {
+      pass('Vote persistence skipped (no DB configured)');
+    }
   }
 
   // Rankings tab
