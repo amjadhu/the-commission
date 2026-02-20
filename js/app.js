@@ -1,7 +1,7 @@
 // App entry: wire up modules once the DOM is ready. This ensures elements exist
 // before modules try to read or write to the DOM.
 document.addEventListener('DOMContentLoaded', () => {
-  DB.init();      // initialize Firebase wrapper (may be local-only)
+  DB.init();      // initialize Supabase wrapper (may be local-only)
   Users.init();   // setup user selection + stored identity
   Game.init();    // load Seahawks next game / live score card
   Feed.init();    // load and render RSS feed
