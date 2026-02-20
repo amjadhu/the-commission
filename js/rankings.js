@@ -323,6 +323,16 @@ const Rankings = (() => {
       return;
     }
 
+    // Fetch ESPN rankings (non-blocking — proceed without if it fails)
+    let espnRankMap = null;
+    try {
+      const espnOrder = await fetchESPNRankings();
+      espnRankMap = {};
+      espnOrder.forEach((abbr, i) => { espnRankMap[abbr] = i + 1; });
+    } catch (e) {
+      console.warn('Could not load ESPN rankings:', e);
+    }
+
     // Calculate consensus (average rank per team)
     const teamScores = {};
     NFL_TEAMS.forEach(t => { teamScores[t.abbr] = { total: 0, count: 0, ranks: {} }; });
@@ -335,6 +345,19 @@ const Rankings = (() => {
       });
     });
 
+    // Include ESPN as an additional ranker
+    if (espnRankMap) {
+      NFL_TEAMS.forEach(t => {
+        if (espnRankMap[t.abbr]) {
+          teamScores[t.abbr].total += espnRankMap[t.abbr];
+          teamScores[t.abbr].count += 1;
+          teamScores[t.abbr].ranks['ESPN'] = espnRankMap[t.abbr];
+        }
+      });
+    }
+
+    const allRankers = espnRankMap ? [...users, 'ESPN'] : [...users];
+
     const consensus = NFL_TEAMS
       .map(t => ({
         ...t,
@@ -345,17 +368,19 @@ const Rankings = (() => {
       }))
       .sort((a, b) => a.avgRank - b.avgRank);
 
+    const hintExtra = espnRankMap ? ' ESPN power rankings are included in the average.' : '';
     panel.innerHTML = `
-      <p class="rankings-hint">Consensus rankings from ${users.length} member${users.length > 1 ? 's' : ''}: ${users.join(', ')}</p>
+      <p class="rankings-hint">Consensus rankings from ${users.length} member${users.length > 1 ? 's' : ''}: ${users.join(', ')}.${hintExtra}</p>
       <div class="consensus-list">
         <div class="consensus-header">
           <span class="ch-rank">#</span>
           <span class="ch-team">Team</span>
           ${users.map(u => `<span class="ch-user">${u.slice(0, 5)}</span>`).join('')}
+          ${espnRankMap ? '<span class="ch-user">ESPN</span>' : ''}
           <span class="ch-avg">Avg</span>
         </div>
         ${consensus.map((team, i) => {
-          const maxSpread = users.length > 1
+          const maxSpread = allRankers.length > 1
             ? Math.max(...Object.values(team.ranks)) - Math.min(...Object.values(team.ranks))
             : 0;
           return `
@@ -363,16 +388,17 @@ const Rankings = (() => {
               <span class="ch-rank">${i + 1}</span>
               <span class="ch-team">${team.abbr} ${team.name}</span>
               ${users.map(u => `<span class="ch-user">${team.ranks[u] || '-'}</span>`).join('')}
+              ${espnRankMap ? `<span class="ch-user">${team.ranks['ESPN'] || '-'}</span>` : ''}
               <span class="ch-avg">${team.avgRank.toFixed(1)}</span>
             </div>
           `;
         }).join('')}
       </div>
-      ${users.length > 1 ? `
+      ${allRankers.length > 1 ? `
         <div class="disagreements-card">
           <h3>Biggest Disagreements</h3>
           <div class="disagreements-list">
-            ${getDisagreements(consensus, users).map(d => `
+            ${getDisagreements(consensus, allRankers).map(d => `
               <div class="disagreement-item">
                 <span class="rank-team-abbr">${d.abbr}</span>
                 <span>${d.name} — ranked as high as <strong>#${d.high}</strong> and as low as <strong>#${d.low}</strong> (${d.spread} spot spread)</span>
