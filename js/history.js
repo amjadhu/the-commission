@@ -189,8 +189,11 @@ const History = (() => {
     wireLeaderTabs();
 
     // Scroll the season chart to the most recent (rightmost) bars
-    const chartWrap = document.querySelector('.season-chart-wrap');
-    if (chartWrap) chartWrap.scrollLeft = chartWrap.scrollWidth;
+    // Deferred so the browser has time to lay out the new content
+    requestAnimationFrame(() => {
+      const chartWrap = document.querySelector('.season-chart-wrap');
+      if (chartWrap) chartWrap.scrollLeft = chartWrap.scrollWidth;
+    });
   }
 
   // Card 1 — Wins by Season bar chart
