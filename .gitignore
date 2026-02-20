@@ -3,3 +3,32 @@ node_modules/
 .env
 *.log
 test-results/
+www/
+
+# Xcode
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+DerivedData/
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+build/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# CocoaPods
+ios/App/Pods/
+
+# Swift Package Manager
+.build/
+ios/App/CapApp-SPM/.swiftpm/xcode/xcuserdata/

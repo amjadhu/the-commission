@@ -1,0 +1,12 @@
+{
+  "appId": "com.jbaker00.thecommission",
+  "appName": "The Commission - Sports",
+  "webDir": "www",
+  "plugins": {
+    "StatusBar": {
+      "overlaysWebView": false,
+      "style": "DARK",
+      "backgroundColor": "#002244"
+    }
+  }
+}
