@@ -222,6 +222,8 @@ try {
 
       await submitBtn.tap();
       await page.waitForTimeout(500);
+      // Wait up to 3s for the take card to render after submit
+      await page.waitForSelector('.take-card', { timeout: 3000 }).catch(() => {});
       const takesVisible = await page.$$('.take-card');
       takesVisible.length > 0 ? pass('Take posted successfully via tap') : fail('Take post', 'No cards');
     }
