@@ -160,6 +160,9 @@ body {
   display: flex;
   border-bottom: 2px solid var(--green);
   padding: 0 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .tab {
