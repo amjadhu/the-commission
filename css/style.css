@@ -120,7 +120,6 @@ body {
   background: linear-gradient(135deg, var(--navy) 0%, #003366 100%);
   color: var(--text-on-dark);
   padding: 14px 20px;
-  padding-top: calc(14px + env(safe-area-inset-top));
   display: flex;
   justify-content: space-between;
   align-items: center;
