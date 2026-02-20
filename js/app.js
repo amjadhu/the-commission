@@ -1,6 +1,12 @@
 // App entry: wire up modules once the DOM is ready. This ensures elements exist
 // before modules try to read or write to the DOM.
 document.addEventListener('DOMContentLoaded', () => {
+  // Push WebView below the iOS status bar if running as a native app
+  if (window.Capacitor?.isNativePlatform()) {
+    window.Capacitor.Plugins.StatusBar?.setOverlaysWebView({ overlay: false });
+    window.Capacitor.Plugins.StatusBar?.setBackgroundColor({ color: '#002244' });
+  }
+
   DB.init();      // initialize Supabase wrapper (may be local-only)
   Users.init();   // setup user selection + stored identity
   Game.init();    // load Seahawks next game / live score card
