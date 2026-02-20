@@ -379,11 +379,13 @@ const Feed = (() => {
   }
 
   function timeAgo(dateStr) {
-    const diff = Date.now() - new Date(dateStr).getTime();
-    const hrs = Math.max(1, Math.round(diff / 3600000));
-    if (hrs < 24) return `${hrs}h ago`;
-    const days = Math.floor(hrs / 24);
-    return `${days}d ago`;
+    const date = new Date(dateStr);
+    if (isNaN(date)) return '';
+    const now = new Date();
+    const sameYear = date.getFullYear() === now.getFullYear();
+    const opts = { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' };
+    if (!sameYear) opts.year = 'numeric';
+    return date.toLocaleString('en-US', opts);
   }
 
   // Lightweight string hash to create a stable id for articles.
