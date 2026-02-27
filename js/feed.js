@@ -83,13 +83,13 @@ const Feed = (() => {
 
   // List of RSS feeds to aggregate. Add/remove sources here.
   const RSS_URLS = [
-    'https://www.seahawks.com/news/rss.xml',
+    'https://www.seahawks.com/rss/news',
     'https://www.espn.com/espn/rss/nfl/news',
     'https://www.reddit.com/r/Seahawks/.rss',
     'https://www.reddit.com/r/nfl/.rss',
     'https://profootballtalk.nbcsports.com/feed/',
     'https://www.cbssports.com/rss/headlines/nfl/',
-    'https://www.nfl.com/rss/rsslanding?searchString=home'
+    'https://sports.yahoo.com/nfl/rss.xml',
   ];
 
   // Public RSS -> JSON proxy used to fetch feeds in-browser.
@@ -371,6 +371,7 @@ const Feed = (() => {
       if (host.includes('reddit')) return 'r/NFL';
       if (host.includes('nbcsports') || host.includes('profootballtalk')) return 'PFT';
       if (host.includes('cbssports')) return 'CBS Sports';
+      if (host.includes('yahoo')) return 'Yahoo Sports';
       if (host.includes('nfl.com')) return 'NFL';
       return host.split('.')[0];
     } catch {
