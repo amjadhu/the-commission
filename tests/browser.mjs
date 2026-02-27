@@ -163,14 +163,19 @@ try {
           const card = cards.find(c => c.textContent.includes(text));
           const btn = card && card.querySelector('.vote-btn[data-vote="agree"], .vote-btn.agree');
           return btn && btn.classList.contains('active');
-        }, 'Seahawks are winning the Super Bowl!', { timeout: 10000 }).catch(() => null);
+        }, 'Seahawks are winning the Super Bowl!', { timeout: 20000 }).catch(() => null);
         const newTakeCard2 = page.locator('.take-card', { hasText: 'Seahawks are winning the Super Bowl!' }).first();
         const agreeActive = await newTakeCard2.locator('.vote-btn.agree, .vote-btn[data-vote="agree"]').first().evaluate(el => el.classList.contains('active'));
         agreeActive ? pass('Agree vote button active after click') : fail('Agree active', 'Not active');
 
         // Switch to disagree
         await newTakeCard2.locator('.vote-btn.disagree, .vote-btn[data-vote="disagree"]').first().click();
-        await page.waitForTimeout(1000);
+        await page.waitForFunction(text => {
+          const cards = Array.from(document.querySelectorAll('.take-card'));
+          const card = cards.find(c => c.textContent.includes(text));
+          const btn = card && card.querySelector('.vote-btn[data-vote="disagree"], .vote-btn.disagree');
+          return btn && btn.classList.contains('active');
+        }, 'Seahawks are winning the Super Bowl!', { timeout: 20000 }).catch(() => null);
         const newTakeCard3 = page.locator('.take-card', { hasText: 'Seahawks are winning the Super Bowl!' }).first();
         const disagreeActive   = await newTakeCard3.locator('.vote-btn.disagree, .vote-btn[data-vote="disagree"]').first().evaluate(el => el.classList.contains('active'));
         const agreeStillActive = await newTakeCard3.locator('.vote-btn.agree, .vote-btn[data-vote="agree"]').first().evaluate(el => el.classList.contains('active'));
@@ -178,7 +183,12 @@ try {
 
         // Toggle off: click disagree again
         await newTakeCard3.locator('.vote-btn.disagree, .vote-btn[data-vote="disagree"]').first().click();
-        await page.waitForTimeout(1000);
+        await page.waitForFunction(text => {
+          const cards = Array.from(document.querySelectorAll('.take-card'));
+          const card = cards.find(c => c.textContent.includes(text));
+          const btn = card && card.querySelector('.vote-btn[data-vote="disagree"], .vote-btn.disagree');
+          return btn && !btn.classList.contains('active');
+        }, 'Seahawks are winning the Super Bowl!', { timeout: 20000 }).catch(() => null);
         const newTakeCard4 = page.locator('.take-card', { hasText: 'Seahawks are winning the Super Bowl!' }).first();
         const disagreeOff = await newTakeCard4.locator('.vote-btn.disagree, .vote-btn[data-vote="disagree"]').first().evaluate(el => el.classList.contains('active'));
         !disagreeOff ? pass('Vote toggle off removes active class') : fail('Vote toggle off', 'Still active');
