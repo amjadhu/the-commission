@@ -83,13 +83,11 @@ const Feed = (() => {
 
   // List of RSS feeds to aggregate. Add/remove sources here.
   const RSS_URLS = [
-    'https://www.seahawks.com/news/rss.xml',
     'https://www.espn.com/espn/rss/nfl/news',
     'https://www.reddit.com/r/Seahawks/.rss',
     'https://www.reddit.com/r/nfl/.rss',
     'https://profootballtalk.nbcsports.com/feed/',
     'https://www.cbssports.com/rss/headlines/nfl/',
-    'https://www.nfl.com/rss/rsslanding?searchString=home'
   ];
 
   // Public RSS -> JSON proxy used to fetch feeds in-browser.

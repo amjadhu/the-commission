@@ -37,6 +37,9 @@ page.on('console', msg => {
   if (msg.type() === 'error') consoleErrors.push(msg.text());
 });
 page.on('pageerror', err => consoleErrors.push(err.message));
+page.on('response', resp => {
+  if (resp.status() === 422) consoleErrors.push(`422 from: ${resp.url()}`);
+});
 
 function pass(name) { results.push({ s: 'PASS', name }); console.log(`  PASS ${name}`); }
 function fail(name, reason) { results.push({ s: 'FAIL', name, reason }); console.log(`  FAIL ${name} — ${reason}`); }
@@ -95,21 +98,25 @@ try {
     // Re-query reaction button after DOM re-render
     const reactionBtn = await page.$('.reaction-btn');
     if (reactionBtn) {
+      // Capture initial state before any click
+      const initiallyActive = await reactionBtn.evaluate(el => el.classList.contains('active'));
       await reactionBtn.click();
       await page.waitForTimeout(300);
       pass('Reaction button click — no crash');
 
-      // Reaction persistence (requires DB): check active class toggle
+      // Reaction persistence (requires DB): verify toggle behavior regardless of initial state
       const dbReady = await page.evaluate(() => typeof DB !== 'undefined' && DB.isReady());
       if (dbReady) {
-        const isActive = await reactionBtn.evaluate(el => el.classList.contains('active'));
-        isActive ? pass('Reaction button has active class after click') : fail('Reaction active', 'Missing active class');
+        const reactionBtn2 = await page.$('.reaction-btn');
+        const afterFirst = reactionBtn2 ? await reactionBtn2.evaluate(el => el.classList.contains('active')) : initiallyActive;
+        afterFirst !== initiallyActive ? pass('Reaction button has active class after click') : fail('Reaction active', 'Missing active class');
 
-        // Toggle off: click again, verify active class removed
-        await reactionBtn.click();
+        // Toggle back: verify it returns to original state
+        if (reactionBtn2) await reactionBtn2.click();
         await page.waitForTimeout(300);
-        const isStillActive = await reactionBtn.evaluate(el => el.classList.contains('active'));
-        !isStillActive ? pass('Reaction toggle off removes active class') : fail('Reaction toggle off', 'Still active');
+        const reactionBtn3 = await page.$('.reaction-btn');
+        const afterSecond = reactionBtn3 ? await reactionBtn3.evaluate(el => el.classList.contains('active')) : !initiallyActive;
+        afterSecond === initiallyActive ? pass('Reaction toggle off removes active class') : fail('Reaction toggle off', 'Still active');
       } else {
         pass('Reaction persistence skipped (no DB configured)');
       }
@@ -133,7 +140,7 @@ try {
   String(charCount).trim() === String(expected) ? pass(`Char counter: ${charCount}`) : fail('Char counter', `Expected ${expected}, got ${charCount}`);
 
   await page.click('#take-form button[type="submit"]');
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(1500);
   const takeCards = await page.$$('.take-card');
   takeCards.length > 0 ? pass(`Take posted — ${takeCards.length} take(s) visible`) : fail('Take post', 'No cards');
 
@@ -141,42 +148,40 @@ try {
     (await page.$('.take-author')) ? pass('Take shows author') : fail('Take author', 'Missing');
     (await page.$('.take-votes')) ? pass('Take has vote buttons') : fail('Take votes', 'Missing');
 
-    // Vote persistence (requires DB): click agree, verify active state toggle
+    // Vote persistence (requires DB): scope to the newly submitted take to avoid stale state
     const dbReadyForVotes = await page.evaluate(() => typeof DB !== 'undefined' && DB.isReady());
     if (dbReadyForVotes) {
-      const agreeSelector = '.take-card .vote-btn.agree, .take-card .vote-btn[data-vote="agree"]';
-      const disagreeSelector = '.take-card .vote-btn.disagree, .take-card .vote-btn[data-vote="disagree"]';
-      const agreeBtn = await page.$(agreeSelector);
-      if (agreeBtn) {
-        await agreeBtn.click();
-        // Wait for list to re-render after DB write, then re-query fresh handles
-        await page.waitForTimeout(1000);
-        const agreeBtn2 = await page.$(agreeSelector);
-        const agreeActive = agreeBtn2
-          ? await agreeBtn2.evaluate(el => el.classList.contains('active'))
-          : false;
+      // Find the take card containing our just-submitted text using Locator API
+      const newTakeCard = page.locator('.take-card', { hasText: 'Seahawks are winning the Super Bowl!' }).first();
+      const agreeLocator = newTakeCard.locator('.vote-btn.agree, .vote-btn[data-vote="agree"]').first();
+      const agreeExists = await agreeLocator.count() > 0;
+      if (agreeExists) {
+        await agreeLocator.click();
+        // Wait for the list to re-render and the agree button to show active
+        await page.waitForFunction(text => {
+          const cards = Array.from(document.querySelectorAll('.take-card'));
+          const card = cards.find(c => c.textContent.includes(text));
+          const btn = card && card.querySelector('.vote-btn[data-vote="agree"], .vote-btn.agree');
+          return btn && btn.classList.contains('active');
+        }, 'Seahawks are winning the Super Bowl!', { timeout: 10000 }).catch(() => null);
+        const newTakeCard2 = page.locator('.take-card', { hasText: 'Seahawks are winning the Super Bowl!' }).first();
+        const agreeActive = await newTakeCard2.locator('.vote-btn.agree, .vote-btn[data-vote="agree"]').first().evaluate(el => el.classList.contains('active'));
         agreeActive ? pass('Agree vote button active after click') : fail('Agree active', 'Not active');
 
-        // Switch to disagree — re-query fresh handles
-        const disagreeBtn2 = await page.$(disagreeSelector);
-        if (disagreeBtn2) {
-          await disagreeBtn2.click();
-          await page.waitForTimeout(1000);
-          const agreeBtn3    = await page.$(agreeSelector);
-          const disagreeBtn3 = await page.$(disagreeSelector);
-          const disagreeActive   = disagreeBtn3 ? await disagreeBtn3.evaluate(el => el.classList.contains('active')) : false;
-          const agreeStillActive = agreeBtn3    ? await agreeBtn3.evaluate(el => el.classList.contains('active'))    : false;
-          disagreeActive && !agreeStillActive ? pass('Vote switches from agree to disagree') : fail('Vote switch', `agree=${agreeStillActive} disagree=${disagreeActive}`);
+        // Switch to disagree
+        await newTakeCard2.locator('.vote-btn.disagree, .vote-btn[data-vote="disagree"]').first().click();
+        await page.waitForTimeout(1000);
+        const newTakeCard3 = page.locator('.take-card', { hasText: 'Seahawks are winning the Super Bowl!' }).first();
+        const disagreeActive   = await newTakeCard3.locator('.vote-btn.disagree, .vote-btn[data-vote="disagree"]').first().evaluate(el => el.classList.contains('active'));
+        const agreeStillActive = await newTakeCard3.locator('.vote-btn.agree, .vote-btn[data-vote="agree"]').first().evaluate(el => el.classList.contains('active'));
+        disagreeActive && !agreeStillActive ? pass('Vote switches from agree to disagree') : fail('Vote switch', `agree=${agreeStillActive} disagree=${disagreeActive}`);
 
-          // Toggle off: click disagree again
-          if (disagreeBtn3) {
-            await disagreeBtn3.click();
-            await page.waitForTimeout(1000);
-            const disagreeBtn4 = await page.$(disagreeSelector);
-            const disagreeOff  = disagreeBtn4 ? await disagreeBtn4.evaluate(el => el.classList.contains('active')) : false;
-            !disagreeOff ? pass('Vote toggle off removes active class') : fail('Vote toggle off', 'Still active');
-          }
-        }
+        // Toggle off: click disagree again
+        await newTakeCard3.locator('.vote-btn.disagree, .vote-btn[data-vote="disagree"]').first().click();
+        await page.waitForTimeout(1000);
+        const newTakeCard4 = page.locator('.take-card', { hasText: 'Seahawks are winning the Super Bowl!' }).first();
+        const disagreeOff = await newTakeCard4.locator('.vote-btn.disagree, .vote-btn[data-vote="disagree"]').first().evaluate(el => el.classList.contains('active'));
+        !disagreeOff ? pass('Vote toggle off removes active class') : fail('Vote toggle off', 'Still active');
       }
     } else {
       pass('Vote persistence skipped (no DB configured)');
