@@ -1053,6 +1053,40 @@ body {
   color: var(--text-secondary);
 }
 
+/* === Feed Digest === */
+.feed-digest {
+  background: linear-gradient(135deg, var(--navy), var(--dark-bg));
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 10px;
+  animation: fadeInUp 0.5s ease both;
+}
+
+.feed-digest-text {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--grey);
+}
+
+.feed-digest-text strong {
+  color: var(--white);
+}
+
+.feed-digest-label {
+  display: inline-block;
+  background: var(--green);
+  color: var(--navy);
+  font-weight: 700;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
 /* === Fun Fact === */
 .fun-fact-btn {
   background: var(--navy);

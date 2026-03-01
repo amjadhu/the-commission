@@ -164,6 +164,42 @@ const Feed = (() => {
       .slice(0, 30);
   }
 
+  // Build a short digest paragraph from the current set of articles.
+  function buildFeedDigest(articles) {
+    const digest = document.createElement('div');
+    digest.className = 'feed-digest';
+
+    const sources = [...new Set(articles.map(a => a.source))];
+    const top = articles.slice(0, 3);
+
+    const headlines = top.map((a, i) => {
+      // Bold the first headline, plain for the rest
+      const title = a.title.length > 80 ? a.title.slice(0, 77) + '...' : a.title;
+      return i === 0 ? `<strong>${title}</strong>` : title;
+    });
+
+    let sentence;
+    if (headlines.length === 1) {
+      sentence = headlines[0];
+    } else if (headlines.length === 2) {
+      sentence = `${headlines[0]} and ${headlines[1]}`;
+    } else {
+      sentence = `${headlines[0]}, ${headlines[1]}, and ${headlines[2]}`;
+    }
+
+    const sourceList = sources.length <= 3
+      ? sources.join(', ')
+      : sources.slice(0, 3).join(', ') + ` + ${sources.length - 3} more`;
+
+    digest.innerHTML = `
+      <p class="feed-digest-text">
+        <span class="feed-digest-label">Today's Buzz</span>
+        ${sentence}. Covering ${articles.length} stories from ${sourceList}.
+      </p>
+    `;
+    return digest;
+  }
+
   // Render an array of article objects into the feed list container.
   function renderFeed(articles) {
     const feedList = document.getElementById('feed-list');
@@ -191,6 +227,11 @@ const Feed = (() => {
     if (summary) feedList.appendChild(renderSummaryCard(summary));
 
     feedList.appendChild(filterBar);
+
+    // Feed digest summary
+    if (articles.length > 0) {
+      feedList.appendChild(buildFeedDigest(articles));
+    }
 
     // Fun Fact button
     const funFactBtn = document.createElement('button');
