@@ -38,14 +38,26 @@ const Takes = (() => {
         return;
       }
 
-      // Disable submit while writing to Firestore, then refresh list
+      // Disable submit while writing to Firestore, then prepend the new card
       const submitBtn = form.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
-      await DB.addTake(text, userId);
+      const newId = await DB.addTake(text, userId);
       input.value = '';
       counter.textContent = '280';
       submitBtn.disabled = false;
-      await loadTakes();
+      if (newId) {
+        // Prepend instantly — avoids a full reload of all takes + votes
+        const list = document.getElementById('takes-list');
+        list.querySelector('.empty-state')?.remove();
+        const card = createTakeCard(
+          { id: newId, text, authorId: userId, timestamp: Date.now() },
+          { agree: [], disagree: [] }
+        );
+        card.classList.add('card-enter');
+        list.prepend(card);
+      } else {
+        await loadTakes();
+      }
     });
   }
 
@@ -65,25 +77,24 @@ const Takes = (() => {
       return;
     }
 
+    // Fetch all votes in parallel instead of one-by-one
+    const votesArr = DB.isReady()
+      ? await Promise.all(takes.map(t => DB.getVotes(t.id)))
+      : takes.map(() => ({ agree: [], disagree: [] }));
+
     list.innerHTML = '';
-    for (let i = 0; i < takes.length; i++) {
-      const card = await createTakeCard(takes[i]);
+    takes.forEach((take, i) => {
+      const card = createTakeCard(take, votesArr[i]);
       card.classList.add('card-enter');
       card.style.animationDelay = `${i * 60}ms`;
       list.appendChild(card);
-    }
+    });
   }
 
   // Build a single take card DOM node and wire vote buttons.
-  async function createTakeCard(take) {
+  function createTakeCard(take, votes = { agree: [], disagree: [] }) {
     const card = document.createElement('div');
     card.className = 'take-card';
-
-    // Read votes for this take (agree/disagree arrays)
-    let votes = { agree: [], disagree: [] };
-    if (DB.isReady()) {
-      votes = await DB.getVotes(take.id);
-    }
 
     const userId = Users.getCurrent();
     const userVote = votes.agree.includes(userId) ? 'agree'
@@ -115,8 +126,21 @@ const Takes = (() => {
         const userId = Users.getCurrent();
         if (!userId) { Users.init(); return; }
         if (!DB.isReady()) return;
+        // Optimistic UI: reflect the click immediately before DB round-trip
+        const currentActive = card.querySelector('.vote-btn.active')?.dataset.vote || null;
+        const isToggleOff = currentActive === btn.dataset.vote;
+        card.querySelectorAll('.vote-btn').forEach(b => b.classList.remove('active'));
+        if (!isToggleOff) btn.classList.add('active');
         await DB.castVote(take.id, btn.dataset.vote, userId);
-        await loadTakes();
+        // Refresh only this card's vote buttons — avoids rebuilding the entire
+        // list DOM (which causes stale-element errors in fast click sequences).
+        const updated = await DB.getVotes(take.id);
+        const userVote = updated.agree.includes(userId) ? 'agree'
+          : updated.disagree.includes(userId) ? 'disagree' : null;
+        card.querySelectorAll('.vote-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.vote === userVote);
+          b.querySelector('.vote-count').textContent = updated[b.dataset.vote].length || '';
+        });
       });
     });
 

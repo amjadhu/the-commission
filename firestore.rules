@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // reactions: anyone can read/write (friend-group app, no auth)
+    match /reactions/{doc} {
+      allow read, write: if true;
+    }
+
+    // takes: anyone can read/write
+    match /takes/{doc} {
+      allow read, write: if true;
+    }
+
+    // votes: anyone can read/write
+    match /votes/{doc} {
+      allow read, write: if true;
+    }
+
+    // rankings: anyone can read/write
+    match /rankings/{doc} {
+      allow read, write: if true;
+    }
+  }
+}

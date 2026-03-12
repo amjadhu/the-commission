@@ -2,12 +2,12 @@
 // settings from the Firebase console (console.firebase.google.com).
 // If left as placeholders the app will run in local-only (no shared DB) mode.
 const FirebaseConfig = {
-  apiKey: 'AIzaSyB0Q6Ca0U-lOt76KVW5jGraRTymkiQHxak',
-  authDomain: 'the-commission-9893b.firebaseapp.com',
-  projectId: 'the-commission-9893b',
-  storageBucket: 'the-commission-9893b.firebasestorage.app',
-  messagingSenderId: '73393302964',
-  appId: '1:73393302964:web:c702245c6ced77fc98d6e1'
+  apiKey: 'AIzaSyBHimQ9TmdwWJsaVBqgiVt4WrCHlA4UJ2A',
+  authDomain: 'the-commission-jb.firebaseapp.com',
+  projectId: 'the-commission-jb',
+  storageBucket: 'the-commission-jb.firebasestorage.app',
+  messagingSenderId: '681669418226',
+  appId: '1:681669418226:web:8259ab5c889e1e6827846b'
 };
 
 // Runtime Firebase state. `db` holds the Firestore instance once initialized.

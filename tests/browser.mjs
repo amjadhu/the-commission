@@ -13,12 +13,19 @@ const MIME = {
 };
 
 const server = createServer((req, res) => {
-  let filePath = join(ROOT, req.url === '/' ? 'index.html' : req.url);
-  if (!existsSync(filePath)) { res.writeHead(404); res.end('Not found'); return; }
-  if (statSync(filePath).isDirectory()) filePath = join(filePath, 'index.html');
-  const ext = extname(filePath);
-  res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
-  res.end(readFileSync(filePath));
+  try {
+    // Strip query string so Firebase SDK's /__/firebase/init.json?... resolves cleanly
+    const pathname = req.url.split('?')[0];
+    let filePath = join(ROOT, pathname === '/' ? 'index.html' : pathname);
+    if (!existsSync(filePath)) { res.writeHead(404); res.end('Not found'); return; }
+    if (statSync(filePath).isDirectory()) filePath = join(filePath, 'index.html');
+    if (!existsSync(filePath)) { res.writeHead(404); res.end('Not found'); return; }
+    const ext = extname(filePath);
+    res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
+    res.end(readFileSync(filePath));
+  } catch (e) {
+    res.writeHead(500); res.end('Server error');
+  }
 });
 
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -43,7 +50,11 @@ function fail(name, reason) { results.push({ s: 'FAIL', name, reason }); console
 
 try {
   console.log('\nLoading page...');
-  await page.goto(BASE, { waitUntil: 'networkidle', timeout: 15000 });
+  // Use 'load' instead of 'networkidle': Firebase Firestore holds a persistent
+  // WebSocket connection open which prevents networkidle from ever firing.
+  await page.goto(BASE, { waitUntil: 'load', timeout: 15000 });
+  // Give Firebase time to initialize and the app to render its first frame
+  await page.waitForTimeout(2000);
   pass('Page loads without crash');
 
   // Header

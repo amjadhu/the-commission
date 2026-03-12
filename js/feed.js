@@ -83,13 +83,10 @@ const Feed = (() => {
 
   // List of RSS feeds to aggregate. Add/remove sources here.
   const RSS_URLS = [
-    'https://www.seahawks.com/news/rss.xml',
+    'https://www.seahawks.com/rss/news',          // fixed URL (was /news/rss.xml)
     'https://www.espn.com/espn/rss/nfl/news',
-    'https://www.reddit.com/r/Seahawks/.rss',
     'https://www.reddit.com/r/nfl/.rss',
     'https://profootballtalk.nbcsports.com/feed/',
-    'https://www.cbssports.com/rss/headlines/nfl/',
-    'https://www.nfl.com/rss/rsslanding?searchString=home'
   ];
 
   // Public RSS -> JSON proxy used to fetch feeds in-browser.
@@ -308,9 +305,13 @@ const Feed = (() => {
   }
 
   // Read reaction counts for a news item and mark which one the current user chose.
+  // A generation counter per card ensures a slow earlier read can't overwrite a
+  // newer optimistic update (race condition when two clicks arrive quickly).
   async function loadReactions(card, newsId) {
     if (!DB.isReady()) return;
+    const gen = (card._reactGen = (card._reactGen || 0) + 1);
     const reactions = await DB.getReactions(newsId);
+    if (card._reactGen !== gen) return; // superseded by a newer call
     const userId = Users.getCurrent();
 
     card.querySelectorAll('.reaction-btn').forEach(btn => {
@@ -331,6 +332,9 @@ const Feed = (() => {
     }
 
     if (!DB.isReady()) return;
+    // Optimistic UI: toggle active class immediately before DB round-trip
+    const btn = card.querySelector(`.reaction-btn[data-emoji="${emoji}"]`);
+    if (btn) btn.classList.toggle('active');
     await DB.toggleReaction(newsId, emoji, userId);
     await loadReactions(card, newsId);
   }
@@ -408,11 +412,8 @@ const Feed = (() => {
       const host = new URL(url).hostname.replace('www.', '');
       if (host.includes('seahawks')) return 'Seahawks';
       if (host.includes('espn')) return 'ESPN';
-      if (host.includes('reddit') && url.includes('Seahawks')) return 'r/Seahawks';
       if (host.includes('reddit')) return 'r/NFL';
       if (host.includes('nbcsports') || host.includes('profootballtalk')) return 'PFT';
-      if (host.includes('cbssports')) return 'CBS Sports';
-      if (host.includes('nfl.com')) return 'NFL';
       return host.split('.')[0];
     } catch {
       return 'NFL';
