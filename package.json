@@ -2,7 +2,8 @@
   "name": "simple-web",
   "private": true,
   "scripts": {
-    "test": "node tests/browser.mjs"
+    "test": "node tests/browser.mjs && node tests/digest.mjs",
+    "test:digest": "node tests/digest.mjs"
   },
   "devDependencies": {
     "playwright-core": "^1.52.0"

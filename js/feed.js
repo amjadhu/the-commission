@@ -174,7 +174,8 @@ const Feed = (() => {
 
     const headlines = top.map((a, i) => {
       // Bold the first headline, plain for the rest
-      const title = a.title.length > 80 ? a.title.slice(0, 77) + '...' : a.title;
+      const raw = a.title.length > 80 ? a.title.slice(0, 77) + '...' : a.title;
+      const title = escapeHtml(raw);
       return i === 0 ? `<strong>${title}</strong>` : title;
     });
 
@@ -365,6 +366,12 @@ const Feed = (() => {
     return `${days}d ago`;
   }
 
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
   // Lightweight string hash to create a stable id for articles.
   function hashString(str) {
     let hash = 0;
@@ -375,5 +382,5 @@ const Feed = (() => {
     return 'n' + Math.abs(hash).toString(36);
   }
 
-  return { init, filterBySource };
+  return { init, filterBySource, _buildFeedDigest: buildFeedDigest };
 })();
